@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 export const AuthContext = createContext();
 
@@ -22,6 +23,11 @@ export const AuthProvider = ({ children }) => {
     );
 
     const data = res.data;
+
+    if (data.status >= 400) {
+      toast.error(data.message);
+      return;
+    }
 
     const userData = {
       accessToken: data.accessToken,

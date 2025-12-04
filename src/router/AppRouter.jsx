@@ -21,9 +21,11 @@ import OwnerRoomServiceUsage from "../pages/owner/OwnerRoomServiceUsage";
 import OwnerChangePassword from "../pages/owner/OwnerChangePassword";
 
 import Login from "../pages/renter/Login";
+import Register from "../pages/renter/Register";
 import Home from "../pages/renter/Home";
 import RoomList from "../pages/renter/RoomList";
 import RoomDetail from "../pages/renter/RoomDetail";
+import Search from "../pages/renter/Search";
 
 export default function AppRouter() {
   return (
@@ -34,9 +36,11 @@ export default function AppRouter() {
           <Route path="/" element={<Home />} />
           <Route path="/rooms" element={<RoomList />} />
           <Route path="/rooms/:id" element={<RoomDetail />} />
+          <Route path="/search" element={<Search />} />
         </Route>
 
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         {/* OWNER */}
         <Route path="/admin/login" element={<OwnerLogin />} />

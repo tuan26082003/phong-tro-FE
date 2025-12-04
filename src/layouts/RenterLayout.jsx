@@ -1,12 +1,75 @@
 // src/layouts/RenterLayout.jsx
-import { useState } from "react";
-import { Outlet, Link } from "react-router-dom";
-import { Button } from "antd";
-import { MenuOutlined, CloseOutlined } from "@ant-design/icons";
+import { useState, useEffect } from "react";
+import { Outlet, Link, useNavigate } from "react-router-dom";
+import { Button, Avatar, Dropdown, Space, Typography } from "antd";
+import { MenuOutlined, CloseOutlined, UserOutlined } from "@ant-design/icons";
 import "./layout.css";
+
+const { Text } = Typography;
 
 export default function RenterLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const navigate = useNavigate();
+
+  // Đọc user từ localStorage
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem("token");
+      const userStr = localStorage.getItem("user");
+
+      if (token && userStr) {
+        const user = JSON.parse(userStr);
+        setCurrentUser(user.user); // user là object chứa fullName, email, roleName...
+      } else {
+        setCurrentUser(null);
+      }
+    } catch (e) {
+      console.error("PARSE USER ERROR:", e);
+      setCurrentUser(null);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
+
+    setCurrentUser(null);
+    navigate("/login");
+  };
+
+  const getInitials = (name) => {
+    if (!name) return "U";
+    const parts = name.trim().split(" ");
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (
+      parts[0].charAt(0).toUpperCase() +
+      parts[parts.length - 1].charAt(0).toUpperCase()
+    );
+  };
+
+  const userMenuItems = [
+    {
+      key: "info",
+      label: (
+        <div style={{ padding: "4px 0" }}>
+          <div style={{ fontWeight: 600 }}>{currentUser?.fullName}</div>
+          <div style={{ fontSize: 12, color: "#888" }}>
+            {currentUser?.email}
+          </div>
+        </div>
+      ),
+      disabled: true,
+    },
+    { type: "divider" },
+    {
+      key: "logout",
+      label: <span style={{ color: "red" }}>Đăng xuất</span>,
+      onClick: handleLogout,
+    },
+  ];
 
   return (
     <div className="layout-wrapper">
@@ -26,8 +89,51 @@ export default function RenterLayout() {
 
         {/* DESKTOP AUTH */}
         <div className="auth auth-desktop">
-          <Button type="default">Đăng nhập</Button>
-          <Button type="primary">Đăng ký</Button>
+          {currentUser ? (
+            <Space align="center" size="middle">
+              <Dropdown
+                menu={{ items: userMenuItems }}
+                placement="bottomRight"
+                trigger={["click"]}
+              >
+                <Space
+                  style={{
+                    cursor: "pointer",
+                    padding: "4px 10px",
+                    borderRadius: 999,
+                    border: "1px solid #e5e5e5",
+                    background: "#fafafa",
+                  }}
+                >
+                  <Avatar
+                    size="small"
+                    style={{ backgroundColor: "#1677ff" }}
+                    icon={!currentUser.fullName && <UserOutlined />}
+                  >
+                    {currentUser.fullName && getInitials(currentUser.fullName)}
+                  </Avatar>
+                  <div style={{ lineHeight: 1.2 }}>
+                    <Text strong style={{ fontSize: 13 }}>
+                      {currentUser.fullName}
+                    </Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: 11 }}>
+                      {currentUser.roleName || "Người thuê trọ"}
+                    </Text>
+                  </div>
+                </Space>
+              </Dropdown>
+            </Space>
+          ) : (
+            <>
+              <Button type="default">
+                <Link to="/login">Đăng nhập</Link>
+              </Button>
+              <Button type="primary">
+                <Link to="/register">Đăng ký</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* MOBILE BURGER */}
@@ -46,6 +152,30 @@ export default function RenterLayout() {
           />
         </div>
 
+        {currentUser && (
+          <div
+            style={{
+              padding: "12px 16px 4px",
+              borderBottom: "1px solid #eee",
+            }}
+          >
+            <Space align="center">
+              <Avatar
+                style={{ backgroundColor: "#1677ff" }}
+                icon={!currentUser.fullName && <UserOutlined />}
+              >
+                {currentUser.fullName && getInitials(currentUser.fullName)}
+              </Avatar>
+              <div>
+                <div style={{ fontWeight: 600 }}>{currentUser.fullName}</div>
+                <div style={{ fontSize: 12, color: "#888" }}>
+                  {currentUser.email}
+                </div>
+              </div>
+            </Space>
+          </div>
+        )}
+
         <nav className="mobile-nav">
           <Link to="/" onClick={() => setMenuOpen(false)}>
             Trang chủ
@@ -62,12 +192,41 @@ export default function RenterLayout() {
         </nav>
 
         <div className="mobile-auth">
-          <Button block type="default">
-            Đăng nhập
-          </Button>
-          <Button block type="primary">
-            Đăng ký
-          </Button>
+          {currentUser ? (
+            <Button
+              block
+              danger
+              onClick={() => {
+                setMenuOpen(false);
+                handleLogout();
+              }}
+            >
+              Đăng xuất
+            </Button>
+          ) : (
+            <>
+              <Button
+                block
+                type="default"
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate("/login");
+                }}
+              >
+                Đăng nhập
+              </Button>
+              <Button
+                block
+                type="primary"
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate("/register");
+                }}
+              >
+                Đăng ký
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

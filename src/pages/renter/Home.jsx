@@ -1,6 +1,6 @@
 // src/pages/Home.jsx
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Row,
@@ -12,6 +12,7 @@ import {
   Collapse,
   Tag,
   Rate,
+  Pagination,
 } from "antd";
 import {
   SearchOutlined,
@@ -22,10 +23,13 @@ import {
   EnvironmentOutlined,
   StarFilled,
 } from "@ant-design/icons";
+import axiosClient from "../../api/axiosClient";
+import { toast } from "react-toastify";
 
 import "./home.css";
 
 const { Panel } = Collapse;
+const API = "/api/rooms";
 
 export default function Home() {
   const nav = useNavigate();
@@ -35,14 +39,80 @@ export default function Home() {
   const [maxArea, setMaxArea] = useState();
   const [minCapacity, setMinCapacity] = useState();
 
+  const [rooms, setRooms] = useState([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 6,
+    total: 0,
+  });
+
+  const logErr = (err, msg) => {
+    console.error("=== ROOMS ERROR ===");
+
+    console.error("URL:", err.config?.url);
+    console.error("METHOD:", err.config?.method);
+    console.error("DATA:", err.config?.data);
+
+    if (err.response) {
+      console.error("STATUS:", err.response.status);
+      console.error("BODY:", err.response.data);
+      toast.error(msg || err.response.data.message);
+    } else if (err.request) {
+      console.error("NO RESPONSE:", err.request);
+      toast.error("Không nhận phản hồi từ server");
+    } else {
+      console.error("REQUEST ERROR:", err.message);
+      toast.error(err.message);
+    }
+  };
+
+  // SEARCH trên thanh hero → vẫn điều hướng sang trang /search (search page riêng)
   const search = () => {
     const qs = new URLSearchParams();
     if (keyword) qs.append("keyword", keyword);
     if (minArea) qs.append("minArea", minArea);
     if (maxArea) qs.append("maxArea", maxArea);
     if (minCapacity) qs.append("minCapacity", minCapacity);
-    nav("/rooms?" + qs.toString());
+    nav("/search?" + qs.toString());
   };
+
+  // Load danh sách phòng cho section "Phòng nổi bật" (thực tế là list có phân trang)
+  const loadRooms = async () => {
+    try {
+      setLoadingRooms(true);
+
+      const params = {
+        page: pagination.page,
+        size: pagination.size,
+      };
+
+      const res = await axiosClient.get(API, { params });
+      const body = res.data;
+
+      let data = body.data || [];
+
+      // Nếu người ta cố dùng minCapacity ở Home nhưng API không hỗ trợ → filter client
+      if (minCapacity) {
+        data = data.filter((r) => (r.capacity || 0) >= Number(minCapacity));
+      }
+
+      setRooms(data);
+      setPagination((prev) => ({
+        ...prev,
+        total: body.totalElements || 0,
+      }));
+    } catch (err) {
+      logErr(err, "Không tải được danh sách phòng");
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRooms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.page, pagination.size, minCapacity]);
 
   return (
     <div className="homepage-content">
@@ -160,37 +230,77 @@ export default function Home() {
         </Row>
       </section>
 
-      {/* FEATURED ROOMS */}
+      {/* FEATURED ROOMS – DÙNG API THỰC */}
       <section className="section">
         <h2 className="section-title">Phòng nổi bật</h2>
 
         <Row gutter={[24, 24]}>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Col xs={24} sm={12} md={8} key={i}>
+          {rooms.map((room) => (
+            <Col xs={24} sm={12} md={8} key={room.id}>
               <Card
                 hoverable
                 className="room-card"
+                loading={loadingRooms}
                 cover={
                   <img
-                    src={`https://placehold.co/900x600?text=Room+${i + 1}`}
+                    src={
+                      room.images && room.images.length > 0
+                        ? `http://localhost:8080/${room.images[0]}`
+                        : "https://placehold.co/900x600?text=No+Image"
+                    }
+                    alt={room.name}
                   />
                 }
               >
-                <h3>Phòng Premium {i + 1}</h3>
+                <h3>{room.name}</h3>
+
                 <p className="room-meta">
-                  {20 + i * 3} m² · {2 + (i % 3)} người
-                </p>
-                <p className="room-price">
-                  {(3000000 + i * 400000).toLocaleString("vi-VN")}₫/tháng
+                  {room.area} m² · {room.capacity} người
                 </p>
 
-                <Button type="primary" block>
+                <p className="room-address">{room.address}</p>
+
+                <p className="room-price">
+                  {room.price.toLocaleString("vi-VN")}₫/tháng
+                </p>
+
+                <Button
+                  type="primary"
+                  block
+                  onClick={() => nav(`/rooms/${room.id}`)}
+                >
                   Xem chi tiết
                 </Button>
               </Card>
             </Col>
           ))}
+
+          {!loadingRooms && rooms.length === 0 && (
+            <Col span={24}>
+              <p style={{ textAlign: "center", color: "#888" }}>
+                Không có phòng nào.
+              </p>
+            </Col>
+          )}
         </Row>
+
+        {pagination.total > pagination.size && (
+          <div style={{ marginTop: 24, textAlign: "center" }}>
+            <Pagination
+              current={pagination.page + 1}
+              pageSize={pagination.size}
+              total={pagination.total}
+              onChange={(page, pageSize) =>
+                setPagination({
+                  ...pagination,
+                  page: page - 1,
+                  size: pageSize,
+                })
+              }
+              showSizeChanger={false}
+            />
+          </div>
+        )}
       </section>
 
       {/* UTILITIES */}

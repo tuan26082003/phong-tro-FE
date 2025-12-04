@@ -1,4 +1,4 @@
-// src/pages/RoomList.jsx
+// src/pages/Search.jsx
 
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -19,22 +19,22 @@ import { SearchOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
 
-const API = "/api/rooms";
+const API = "/api/search/rooms/advanced";
 const { Option } = Select;
 const { Title, Paragraph, Text } = Typography;
 
-export default function RoomList() {
+export default function Search() {
   const location = useLocation();
   const navigate = useNavigate();
 
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [q, setQ] = useState("");
-  const [minPrice, setMinPrice] = useState();
-  const [maxPrice, setMaxPrice] = useState();
+  const [keyword, setKeyword] = useState("");
   const [minArea, setMinArea] = useState();
-  const [sort, setSort] = useState("");
+  const [maxArea, setMaxArea] = useState();
+  const [minCapacity, setMinCapacity] = useState();
+  const [status, setStatus] = useState(""); // AVAILABLE / OCCUPIED / ...
 
   const [pagination, setPagination] = useState({
     page: 0, // 0-based cho API
@@ -43,7 +43,7 @@ export default function RoomList() {
   });
 
   const logErr = (err, msg) => {
-    console.error("=== ROOM LIST ERROR ===");
+    console.error("=== SEARCH ROOMS ERROR ===");
     console.error("URL:", err.config?.url);
     console.error("METHOD:", err.config?.method);
     console.error("DATA:", err.config?.data);
@@ -60,27 +60,26 @@ export default function RoomList() {
     }
   };
 
-  // Lấy giá trị ban đầu từ query string (nếu tới từ Home search)
+  // Lấy giá trị ban đầu từ query string (nhảy từ Home sang)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
 
-    const qParam = params.get("q") || params.get("keyword") || "";
-    const minPriceParam = params.get("minPrice");
-    const maxPriceParam = params.get("maxPrice");
+    const kwParam = params.get("keyword") || params.get("q") || "";
     const minAreaParam = params.get("minArea");
-    const sortParam = params.get("sort") || "";
+    const maxAreaParam = params.get("maxArea");
+    const minCapacityParam = params.get("minCapacity");
+    const statusParam = params.get("status") || "";
     const pageParam = params.get("page"); // 1-based trên URL
 
-    setQ(qParam);
-    setMinPrice(minPriceParam ? Number(minPriceParam) : undefined);
-    setMaxPrice(maxPriceParam ? Number(maxPriceParam) : undefined);
+    setKeyword(kwParam);
     setMinArea(minAreaParam ? Number(minAreaParam) : undefined);
-    setSort(sortParam);
+    setMaxArea(maxAreaParam ? Number(maxAreaParam) : undefined);
+    setMinCapacity(minCapacityParam ? Number(minCapacityParam) : undefined);
+    setStatus(statusParam);
     setPagination((prev) => ({
       ...prev,
       page: pageParam ? Number(pageParam) - 1 : 0,
     }));
-    // chỉ đọc 1 lần khi mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -93,17 +92,15 @@ export default function RoomList() {
         size: pagination.size,
       };
 
-      if (q) params.q = q;
-      if (minPrice) params.minPrice = minPrice;
-      if (maxPrice) params.maxPrice = maxPrice;
+      if (keyword) params.keyword = keyword;
+      if (status) params.status = status;
       if (minArea) params.minArea = minArea;
-      if (sort) params.sort = sort;
+      if (maxArea) params.maxArea = maxArea;
+      if (minCapacity) params.minCapacity = minCapacity;
 
       const res = await axiosClient.get(API, { params });
       const body = res.data;
 
-      // ĐỪNG làm body.code !== 0 rồi clear data → dễ sai.
-      // Chỉ cần cố gắng lấy mảng data ra.
       const data = Array.isArray(body.data)
         ? body.data
         : Array.isArray(body.content)
@@ -111,13 +108,12 @@ export default function RoomList() {
         : [];
 
       setRooms(data);
-
       setPagination((prev) => ({
         ...prev,
         total: body.totalElements ?? data.length ?? 0,
       }));
     } catch (err) {
-      logErr(err, "Không tải được danh sách phòng");
+      logErr(err, "Không tải được kết quả tìm kiếm");
       setRooms([]);
       setPagination((prev) => ({ ...prev, total: 0 }));
     } finally {
@@ -128,20 +124,26 @@ export default function RoomList() {
   useEffect(() => {
     loadRooms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.page, pagination.size, q, minPrice, maxPrice, minArea, sort]);
+  }, [
+    pagination.page,
+    pagination.size,
+    keyword,
+    minArea,
+    maxArea,
+    minCapacity,
+    status,
+  ]);
 
   const applyFilter = () => {
-    // Cập nhật URL cho đẹp, nhưng chỉ dùng để share link, state vẫn là nguồn chính
     const params = new URLSearchParams();
-    if (q) params.set("q", q);
-    if (minPrice) params.set("minPrice", String(minPrice));
-    if (maxPrice) params.set("maxPrice", String(maxPrice));
+    if (keyword) params.set("keyword", keyword);
     if (minArea) params.set("minArea", String(minArea));
-    if (sort) params.set("sort", sort);
+    if (maxArea) params.set("maxArea", String(maxArea));
+    if (minCapacity) params.set("minCapacity", String(minCapacity));
+    if (status) params.set("status", status);
     params.set("page", "1");
 
-    navigate(`/rooms?${params.toString()}`);
-
+    navigate(`/search?${params.toString()}`);
     setPagination((prev) => ({ ...prev, page: 0 }));
   };
 
@@ -149,13 +151,13 @@ export default function RoomList() {
     setPagination((prev) => ({ ...prev, page: page - 1 }));
     const params = new URLSearchParams(location.search);
     params.set("page", String(page));
-    navigate(`/rooms?${params.toString()}`, { replace: true });
+    navigate(`/search?${params.toString()}`, { replace: true });
   };
 
-  const getStatusTag = (status) => {
-    if (status === "AVAILABLE") return <Tag color="green">Còn trống</Tag>;
-    if (status === "OCCUPIED") return <Tag color="red">Đã thuê</Tag>;
-    return <Tag>{status}</Tag>;
+  const getStatusTag = (s) => {
+    if (s === "AVAILABLE") return <Tag color="green">Còn trống</Tag>;
+    if (s === "OCCUPIED") return <Tag color="red">Đã thuê</Tag>;
+    return <Tag>{s}</Tag>;
   };
 
   return (
@@ -169,10 +171,10 @@ export default function RoomList() {
       {/* HEADER */}
       <div style={{ marginBottom: 24 }}>
         <Title level={2} style={{ marginBottom: 4 }}>
-          Danh sách phòng trọ
+          Kết quả tìm kiếm phòng trọ
         </Title>
         <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-          Lọc theo giá, diện tích và khu vực để tìm được phòng phù hợp nhất.
+          Lọc nâng cao theo diện tích, sức chứa, trạng thái phòng.
         </Paragraph>
       </div>
 
@@ -189,28 +191,11 @@ export default function RoomList() {
             <Input
               placeholder="Từ khóa: tên phòng, địa chỉ..."
               prefix={<SearchOutlined />}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
             />
           </Col>
-          <Col xs={12} md={4}>
-            <InputNumber
-              style={{ width: "100%" }}
-              placeholder="Giá từ"
-              min={0}
-              value={minPrice}
-              onChange={setMinPrice}
-            />
-          </Col>
-          <Col xs={12} md={4}>
-            <InputNumber
-              style={{ width: "100%" }}
-              placeholder="Giá đến"
-              min={0}
-              value={maxPrice}
-              onChange={setMaxPrice}
-            />
-          </Col>
+
           <Col xs={12} md={4}>
             <InputNumber
               style={{ width: "100%" }}
@@ -220,18 +205,40 @@ export default function RoomList() {
               onChange={setMinArea}
             />
           </Col>
+
+          <Col xs={12} md={4}>
+            <InputNumber
+              style={{ width: "100%" }}
+              placeholder="DT tối đa (m²)"
+              min={0}
+              value={maxArea}
+              onChange={setMaxArea}
+            />
+          </Col>
+
+          <Col xs={12} md={4}>
+            <InputNumber
+              style={{ width: "100%" }}
+              placeholder="Sức chứa tối thiểu"
+              min={1}
+              value={minCapacity}
+              onChange={setMinCapacity}
+            />
+          </Col>
+
           <Col xs={12} md={4}>
             <Select
               style={{ width: "100%" }}
-              placeholder="Sắp xếp"
+              placeholder="Trạng thái"
               allowClear
-              value={sort || undefined}
-              onChange={(v) => setSort(v || "")}
+              value={status || undefined}
+              onChange={(v) => setStatus(v || "")}
             >
-              <Option value="asc">Giá tăng dần</Option>
-              <Option value="desc">Giá giảm dần</Option>
+              <Option value="AVAILABLE">Còn trống</Option>
+              <Option value="OCCUPIED">Đã thuê</Option>
             </Select>
           </Col>
+
           <Col xs={24} md={4}>
             <Button type="primary" block onClick={applyFilter}>
               Áp dụng

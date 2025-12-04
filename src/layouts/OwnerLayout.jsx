@@ -37,14 +37,14 @@ const ownerMenu = [
     label: <Link to="/admin/rooms">Quản lý phòng</Link>,
   },
   {
-    key: "room-service-usages",
+    key: "services",
     icon: <ThunderboltOutlined />,
-    label: <Link to="/admin/room-service-usages">Số liệu sử dụng</Link>,
+    label: <Link to="/admin/services">Quản lý dịch vụ</Link>,
   },
   {
-    key: "images",
+    key: "room-service-usages",
     icon: <ClusterOutlined />,
-    label: <Link to="/admin/images">Hình ảnh phòng</Link>,
+    label: <Link to="/admin/room-service-usages">Số liệu sử dụng</Link>,
   },
 
   // HÓA ĐƠN & THANH TOÁN

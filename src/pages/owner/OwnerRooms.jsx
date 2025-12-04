@@ -9,18 +9,18 @@ import {
   InputNumber,
   Select,
   message,
-  Tag,
+  Upload,
 } from "antd";
 
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
+  UploadOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
 
 import axiosClient from "../../api/axiosClient";
-import { toast } from "react-toastify";
 
 const API = "/api/rooms";
 
@@ -32,12 +32,10 @@ export default function OwnerRooms() {
     page: 0,
     size: 10,
     total: 0,
+    totalPages: 0,
   });
 
-  const [query, setQuery] = useState({
-    q: "",
-    sort: "asc",
-  });
+  const [query, setQuery] = useState({ q: "", sort: "asc" });
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
@@ -46,27 +44,13 @@ export default function OwnerRooms() {
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
   const [deleteData, setDeleteData] = useState(null);
 
-  const logAxiosError = (err, customMsg) => {
-    console.error("========= AXIOS ERROR =========");
+  const [fileList, setFileList] = useState([]);
 
-    console.error("REQUEST URL:", err.config?.url);
-    console.error("REQUEST METHOD:", err.config?.method);
-    console.error("REQUEST HEADERS:", err.config?.headers);
-    console.error("REQUEST BODY:", err.config?.data);
-
-    if (err.response) {
-      console.error("RESPONSE STATUS:", err.response.status);
-      console.error("RESPONSE DATA:", err.response.data);
-
-      message.error(
-        customMsg || err.response.data.message || `Lỗi ${err.response.status}`
-      );
-    } else if (err.request) {
-      console.error("NO RESPONSE:", err.request);
-      message.error("Không nhận được phản hồi từ server");
+  const logAxiosError = (err, msg) => {
+    if (err?.response) {
+      message.error(msg || err.response.data.message || "Lỗi");
     } else {
-      console.error("REQUEST ERROR:", err.message);
-      message.error(err.message);
+      message.error("Không thể kết nối server");
     }
   };
 
@@ -103,17 +87,15 @@ export default function OwnerRooms() {
 
   const openCreate = () => {
     setEditData(null);
+    setFileList([]);
     form.resetFields();
     setModalOpen(true);
   };
 
   const openEdit = (record) => {
-    form.setFieldsValue({
-      ...record,
-      images: record.images?.join(", ") || "",
-    });
-
     setEditData(record);
+    setFileList([]); // luôn yêu cầu upload lại file vì backend yêu cầu files bắt buộc
+    form.setFieldsValue(record);
     setModalOpen(true);
   };
 
@@ -122,34 +104,31 @@ export default function OwnerRooms() {
     setModalDeleteOpen(true);
   };
 
+  const buildMultipart = (values) => {
+    const fd = new FormData();
+
+    // remove status (backend không cho phép)
+    delete values.status;
+
+    fd.append("data", JSON.stringify(values));
+
+    fileList.forEach((f) => {
+      fd.append("files", f.originFileObj);
+    });
+
+    return fd;
+  };
+
   const submitForm = async () => {
     const values = await form.validateFields();
-
-    const payload = {
-      ...values,
-      images: values.images
-        ? values.images.split(",").map((i) => i.trim())
-        : [],
-    };
+    const payload = buildMultipart(values);
 
     try {
       if (editData) {
-        const editReq = await axiosClient.put(`${API}/${editData.id}`, payload);
-
-        if (editReq.data.status >= 400) {
-          toast.error(editReq.data.message);
-          return;
-        }
-
+        await axiosClient.put(`${API}/${editData.id}`, payload);
         message.success("Cập nhật phòng thành công");
       } else {
-        const createReq = await axiosClient.post(API, payload);
-
-        if (createReq.data.status >= 400) {
-          toast.error(createReq.data.message);
-          return;
-        }
-
+        await axiosClient.post(API, payload);
         message.success("Thêm phòng thành công");
       }
 
@@ -194,15 +173,6 @@ export default function OwnerRooms() {
     {
       title: "Trạng thái",
       dataIndex: "status",
-      render: (s) => (
-        <Tag
-          color={
-            s === "AVAILABLE" ? "green" : s === "RENTED" ? "blue" : "orange"
-          }
-        >
-          {s}
-        </Tag>
-      ),
     },
     {
       title: "Hành động",
@@ -213,7 +183,6 @@ export default function OwnerRooms() {
             icon={<EditOutlined style={{ color: "#1677ff" }} />}
             onClick={() => openEdit(record)}
           />
-
           <Button
             type="text"
             danger
@@ -227,13 +196,7 @@ export default function OwnerRooms() {
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          marginBottom: 16,
-        }}
-      >
+      <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
         <Input
           placeholder="Tìm phòng..."
           value={query.q}
@@ -276,7 +239,7 @@ export default function OwnerRooms() {
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         onOk={submitForm}
-        width={700}
+        width={750}
         title={editData ? "Cập nhật phòng" : "Thêm phòng"}
       >
         <Form layout="vertical" form={form}>
@@ -295,32 +258,31 @@ export default function OwnerRooms() {
               <Input />
             </Form.Item>
 
-            <Form.Item name="images" label="Ảnh (dấu phẩy)">
-              <Input />
+            <Form.Item label="Ảnh (bắt buộc)">
+              <Upload
+                multiple
+                beforeUpload={() => false}
+                fileList={fileList}
+                onChange={({ fileList }) => setFileList(fileList)}
+              >
+                <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
+              </Upload>
             </Form.Item>
 
             <Form.Item name="price" label="Giá" rules={[{ required: true }]}>
-              <InputNumber style={{ width: "100%" }} min={0} />
+              <InputNumber min={0} style={{ width: "100%" }} />
             </Form.Item>
 
             <Form.Item name="deposit" label="Đặt cọc">
-              <InputNumber style={{ width: "100%" }} min={0} />
+              <InputNumber min={0} style={{ width: "100%" }} />
             </Form.Item>
 
             <Form.Item name="area" label="Diện tích">
-              <InputNumber style={{ width: "100%" }} min={0} />
+              <InputNumber min={0} style={{ width: "100%" }} />
             </Form.Item>
 
             <Form.Item name="capacity" label="Số người">
-              <InputNumber style={{ width: "100%" }} min={1} />
-            </Form.Item>
-
-            <Form.Item name="status" label="Trạng thái">
-              <Select>
-                <Select.Option value="AVAILABLE">AVAILABLE</Select.Option>
-                <Select.Option value="RENTED">RENTED</Select.Option>
-                <Select.Option value="MAINTENANCE">MAINTENANCE</Select.Option>
-              </Select>
+              <InputNumber min={1} style={{ width: "100%" }} />
             </Form.Item>
 
             <Form.Item name="address" label="Địa chỉ">

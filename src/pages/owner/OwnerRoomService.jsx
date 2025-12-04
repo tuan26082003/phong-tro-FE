@@ -31,6 +31,7 @@ export default function OwnerRoomServices() {
     page: 0,
     size: 10,
     total: 0,
+    totalPages: 0,
   });
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -53,12 +54,16 @@ export default function OwnerRoomServices() {
         `${API}?page=${pagination.page}&size=${pagination.size}`
       );
 
-      setServices(res.data.data || []);
+      const d = res.data;
+
+      setServices(d.data || []);
 
       setPagination({
         ...pagination,
-        total: res.data.totalElements,
-        totalPages: res.data.totalPages,
+        page: d.pageNumber,
+        size: d.pageSize,
+        total: d.totalElements,
+        totalPages: d.totalPages,
       });
     } catch {
       message.error("Không tải được danh sách dịch vụ");
@@ -109,7 +114,7 @@ export default function OwnerRoomServices() {
     setModalDeleteOpen(true);
   };
 
-  const openAssignModal = async (service) => {
+  const openAssignModal = () => {
     setAssignRoomId(null);
     setAssignList([]);
     setModalAssignOpen(true);
@@ -151,6 +156,7 @@ export default function OwnerRoomServices() {
         serviceId,
         roomId: assignRoomId,
       });
+
       message.success("Đã gán dịch vụ");
 
       loadAssignList(assignRoomId);
@@ -322,10 +328,10 @@ export default function OwnerRoomServices() {
                 }}
               >
                 <span>
-                  {s.serviceName} – {s.price.toLocaleString()}₫
+                  {s.serviceName} – {s.price.toLocaleString("vi-VN")}₫
                 </span>
 
-                <Button danger onClick={() => unassignService(s.assignId)}>
+                <Button danger onClick={() => unassignService(s.id)}>
                   Xoá
                 </Button>
               </div>

@@ -21,8 +21,9 @@ const API = "/api/payments";
 
 export default function OwnerPayment() {
   const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [bookingOptions, setBookingOptions] = useState([]);
 
+  const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     page: 0,
     size: 10,
@@ -44,36 +45,18 @@ export default function OwnerPayment() {
 
   const [form] = Form.useForm();
 
-  // =============================
+  // =====================================================
   // LOG ERROR
-  // =============================
+  // =====================================================
   const logErr = (err, msgText) => {
     console.error("=== PAYMENT ERROR ===");
-    console.error("URL:", err.config?.url);
-    console.error("METHOD:", err.config?.method);
-    console.error("DATA SENT:", err.config?.data);
-
-    if (err.response) {
-      console.error("STATUS:", err.response.status);
-      console.error("BODY:", err.response.data);
-
-      toast.error(
-        msgText ||
-          err.response.data.message ||
-          "Lỗi server (200 nhưng body lỗi)."
-      );
-    } else if (err.request) {
-      console.error("NO RESPONSE:", err.request);
-      toast.error("Không nhận phản hồi từ server");
-    } else {
-      console.error("REQ ERROR:", err.message);
-      toast.error(err.message);
-    }
+    console.error(err);
+    toast.error(msgText || err.response?.data?.message || "Lỗi server");
   };
 
-  // =============================
+  // =====================================================
   // LOAD PAYMENT LIST
-  // =============================
+  // =====================================================
   const loadPayments = async () => {
     try {
       setLoading(true);
@@ -91,18 +74,11 @@ export default function OwnerPayment() {
 
       const res = await axiosClient.get(API, { params });
 
-      // FIX: server trả status 200 nhưng body status !== 0
-      if (res.data.status && res.data.status !== 0) {
-        throw { response: { data: res.data } };
-      }
-
       setPayments(res.data.data || []);
-      setPagination({
-        ...pagination,
-        total: res.data.totalElements,
-      });
+      setPagination({ ...pagination, total: res.data.totalElements });
     } catch (err) {
       logErr(err, "Không tải được danh sách thanh toán");
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -112,6 +88,27 @@ export default function OwnerPayment() {
     loadPayments();
   }, [pagination.page, query]);
 
+  // =====================================================
+  // LOAD BOOKING OPTIONS
+  // =====================================================
+  const loadBookingOptions = async () => {
+    try {
+      const res = await axiosClient.get("/api/bookings", {
+        params: { page: 0, size: 9999 },
+      });
+      setBookingOptions(res.data.data || []);
+    } catch (err) {
+      logErr(err, "Không tải được danh sách booking");
+    }
+  };
+
+  useEffect(() => {
+    loadBookingOptions();
+  }, []);
+
+  // =====================================================
+  // RESET FILTERS
+  // =====================================================
   const resetFilters = () => {
     setQuery({
       bookingId: "",
@@ -124,14 +121,17 @@ export default function OwnerPayment() {
     setPagination({ ...pagination, page: 0 });
   };
 
-  // =============================
-  // CREATE PAYMENT
-  // =============================
+  // =====================================================
+  // OPEN CREATE
+  // =====================================================
   const openCreate = () => {
     form.resetFields();
     setModalOpen(true);
   };
 
+  // =====================================================
+  // SUBMIT CREATE
+  // =====================================================
   const submitCreate = async () => {
     const values = await form.validateFields();
 
@@ -151,11 +151,8 @@ export default function OwnerPayment() {
 
       if (res.data.status >= 400) {
         toast.success(res.data.message);
+        setModalOpen(false);
         return;
-      }
-
-      if (res.data.status && res.data.status !== 0) {
-        throw { response: { data: res.data } };
       }
 
       toast.success("Tạo khoản thanh toán thành công");
@@ -166,9 +163,9 @@ export default function OwnerPayment() {
     }
   };
 
-  // =============================
+  // =====================================================
   // UPDATE STATUS
-  // =============================
+  // =====================================================
   const openUpdateStatus = (id) => {
     setUpdateId(id);
     setModalUpdateOpen(true);
@@ -180,21 +177,19 @@ export default function OwnerPayment() {
         paymentStatus: status,
       });
 
-      if (res.data.status && res.data.status !== 0) {
-        throw { response: { data: res.data } };
-      }
+      if (res.data.status !== 0) throw { response: { data: res.data } };
 
       toast.success("Cập nhật trạng thái thành công");
       setModalUpdateOpen(false);
       loadPayments();
     } catch (err) {
-      logErr(err, "Không cập nhật được trạng thái");
+      logErr(err, "Không cập nhật trạng thái");
     }
   };
 
-  // =============================
+  // =====================================================
   // TABLE COLUMNS
-  // =============================
+  // =====================================================
   const columns = [
     { title: "ID", dataIndex: "id" },
     { title: "Booking", dataIndex: "bookingId" },
@@ -212,11 +207,7 @@ export default function OwnerPayment() {
       dataIndex: "paymentDate",
       render: (v) => v && dayjs(v).format("DD/MM/YYYY HH:mm"),
     },
-    {
-      title: "Chu kỳ",
-      dataIndex: "paymentPeriod",
-      render: (v) => v || "---",
-    },
+    { title: "Chu kỳ", dataIndex: "paymentPeriod", render: (v) => v || "---" },
     {
       title: "Hành động",
       render: (record) => (
@@ -233,9 +224,9 @@ export default function OwnerPayment() {
     },
   ];
 
-  // =============================
+  // =====================================================
   // RENDER
-  // =============================
+  // =====================================================
   return (
     <div>
       <h2>Quản lý thanh toán</h2>
@@ -294,10 +285,7 @@ export default function OwnerPayment() {
         <DatePicker
           placeholder="Ngày thanh toán"
           onChange={(v) =>
-            setQuery({
-              ...query,
-              paymentDate: v ? v.toISOString() : "",
-            })
+            setQuery({ ...query, paymentDate: v ? v.toISOString() : "" })
           }
         />
 
@@ -349,12 +337,21 @@ export default function OwnerPayment() {
               gap: 20,
             }}
           >
+            {/* BOOKING SELECT */}
             <Form.Item
               name="bookingId"
-              label="Booking ID"
+              label="Booking"
               rules={[{ required: true }]}
             >
-              <InputNumber style={{ width: "100%" }} />
+              <Select
+                showSearch
+                placeholder="Chọn booking"
+                optionFilterProp="label"
+                options={bookingOptions.map((b) => ({
+                  value: b.id,
+                  label: `#${b.id} - Phòng ${b.roomId} - ${b.startDate} → ${b.endDate}`,
+                }))}
+              />
             </Form.Item>
 
             <Form.Item

@@ -37,7 +37,7 @@ export default function RoomList() {
   const [sort, setSort] = useState("");
 
   const [pagination, setPagination] = useState({
-    page: 0, // 0-based cho API
+    page: 0,
     size: 9,
     total: 0,
   });
@@ -60,7 +60,6 @@ export default function RoomList() {
     }
   };
 
-  // Lấy giá trị ban đầu từ query string (nếu tới từ Home search)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
 
@@ -69,7 +68,7 @@ export default function RoomList() {
     const maxPriceParam = params.get("maxPrice");
     const minAreaParam = params.get("minArea");
     const sortParam = params.get("sort") || "";
-    const pageParam = params.get("page"); // 1-based trên URL
+    const pageParam = params.get("page");
 
     setQ(qParam);
     setMinPrice(minPriceParam ? Number(minPriceParam) : undefined);
@@ -80,8 +79,6 @@ export default function RoomList() {
       ...prev,
       page: pageParam ? Number(pageParam) - 1 : 0,
     }));
-    // chỉ đọc 1 lần khi mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadRooms = async () => {
@@ -102,8 +99,6 @@ export default function RoomList() {
       const res = await axiosClient.get(API, { params });
       const body = res.data;
 
-      // ĐỪNG làm body.code !== 0 rồi clear data → dễ sai.
-      // Chỉ cần cố gắng lấy mảng data ra.
       const data = Array.isArray(body.data)
         ? body.data
         : Array.isArray(body.content)
@@ -127,11 +122,9 @@ export default function RoomList() {
 
   useEffect(() => {
     loadRooms();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.page, pagination.size, q, minPrice, maxPrice, minArea, sort]);
 
   const applyFilter = () => {
-    // Cập nhật URL cho đẹp, nhưng chỉ dùng để share link, state vẫn là nguồn chính
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (minPrice) params.set("minPrice", String(minPrice));
@@ -166,15 +159,54 @@ export default function RoomList() {
         padding: "0 16px",
       }}
     >
-      {/* HEADER */}
-      <div style={{ marginBottom: 24 }}>
-        <Title level={2} style={{ marginBottom: 4 }}>
-          Danh sách phòng trọ
-        </Title>
-        <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-          Lọc theo giá, diện tích và khu vực để tìm được phòng phù hợp nhất.
-        </Paragraph>
+      {/* =================== BANNER TOP (giống RoomDetail) =================== */}
+      <div style={{ width: "100%", marginBottom: 28 }}>
+        <div
+          style={{
+            height: 300,
+            width: "100%",
+            borderRadius: 12,
+            overflow: "hidden",
+            position: "relative",
+            backgroundImage:
+              "url(https://images.unsplash.com/photo-1502672260266-1c1ef2d93688)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            color: "#fff",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(0,0,0,0.45)",
+            }}
+          />
+
+          <div style={{ position: "absolute", textAlign: "center" }}>
+            <div style={{ fontSize: 32, fontWeight: 700 }}>
+              Danh sách phòng trọ
+            </div>
+            <div style={{ marginTop: 10, fontSize: 17 }}>
+              <span
+                style={{ cursor: "pointer", color: "#dbe8ff" }}
+                onClick={() => navigate("/")}
+              >
+                Trang chủ
+              </span>
+
+              <span style={{ margin: "0 6px" }}>›</span>
+
+              <span style={{ color: "#fff" }}>Phòng trọ</span>
+            </div>
+          </div>
+        </div>
       </div>
+      {/* ==================================================================== */}
 
       {/* FILTER BAR */}
       <Card
@@ -254,6 +286,7 @@ export default function RoomList() {
                 display: "flex",
                 flexDirection: "column",
               }}
+              onClick={() => navigate(`/rooms/${room.id}`)}
               cover={
                 <img
                   src={
@@ -294,13 +327,7 @@ export default function RoomList() {
                 <span>{room.address}</span>
               </div>
 
-              <div
-                style={{
-                  color: "#555",
-                  fontSize: 13,
-                  marginBottom: 8,
-                }}
-              >
+              <div style={{ color: "#555", fontSize: 13, marginBottom: 8 }}>
                 {room.area} m² · {room.capacity} người · Chủ trọ:{" "}
                 <strong>{room.ownerName}</strong>
               </div>
@@ -333,14 +360,6 @@ export default function RoomList() {
                   {room.price.toLocaleString("vi-VN")}₫/tháng
                 </Text>
               </div>
-
-              <Button
-                type="primary"
-                block
-                onClick={() => navigate(`/rooms/${room.id}`)}
-              >
-                Xem chi tiết
-              </Button>
             </Card>
           </Col>
         ))}

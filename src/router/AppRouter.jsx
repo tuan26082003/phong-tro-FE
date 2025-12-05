@@ -19,6 +19,7 @@ import OwnerBankAccount from "../pages/owner/OwnerBankAccount";
 import OwnerInvoice from "../pages/owner/OwnerInvoice";
 import OwnerRoomServiceUsage from "../pages/owner/OwnerRoomServiceUsage";
 import OwnerChangePassword from "../pages/owner/OwnerChangePassword";
+import OwnerBooking from "../pages/owner/OwnerBooking";
 
 import Login from "../pages/renter/Login";
 import Register from "../pages/renter/Register";
@@ -26,6 +27,15 @@ import Home from "../pages/renter/Home";
 import RoomList from "../pages/renter/RoomList";
 import RoomDetail from "../pages/renter/RoomDetail";
 import Search from "../pages/renter/Search";
+import Contact from "../pages/renter/Contact";
+import Help from "../pages/renter/Help";
+import Contract from "../pages/renter/Contract";
+import Booking from "../pages/renter/Booking";
+import BookingList from "../pages/renter/BookingList";
+import ChangePassword from "../pages/renter/ChangePassword";
+import BookingDetail from "../pages/renter/BookingDetail";
+
+import RenterPrivateRoute from "./RenterPrivateRoute";
 
 export default function AppRouter() {
   return (
@@ -37,6 +47,52 @@ export default function AppRouter() {
           <Route path="/rooms" element={<RoomList />} />
           <Route path="/rooms/:id" element={<RoomDetail />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/help" element={<Help />} />
+          <Route
+            path="/contract"
+            element={
+              <RenterPrivateRoute>
+                <Contract />
+              </RenterPrivateRoute>
+            }
+          />
+
+          <Route
+            path="/booking"
+            element={
+              <RenterPrivateRoute>
+                <Booking />
+              </RenterPrivateRoute>
+            }
+          />
+
+          <Route
+            path="/booking-list"
+            element={
+              <RenterPrivateRoute>
+                <BookingList />
+              </RenterPrivateRoute>
+            }
+          />
+
+          <Route
+            path="/change-password"
+            element={
+              <RenterPrivateRoute>
+                <ChangePassword />
+              </RenterPrivateRoute>
+            }
+          />
+
+          <Route
+            path="/booking/:id"
+            element={
+              <RenterPrivateRoute>
+                <BookingDetail />
+              </RenterPrivateRoute>
+            }
+          />
         </Route>
 
         <Route path="/login" element={<Login />} />
@@ -48,7 +104,7 @@ export default function AppRouter() {
         <Route
           path="/admin"
           element={
-            <PrivateRoute role="admin">
+            <PrivateRoute roles={["ADMIN", "OWNER"]}>
               <OwnerLayout />
             </PrivateRoute>
           }
@@ -64,6 +120,7 @@ export default function AppRouter() {
           <Route path="contracts" element={<OwnerContract />} />
           <Route path="banks" element={<OwnerBankAccount />} />
           <Route path="invoices" element={<OwnerInvoice />} />
+          <Route path="bookings" element={<OwnerBooking />} />
           <Route
             path="room-service-usages"
             element={<OwnerRoomServiceUsage />}

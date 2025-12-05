@@ -37,7 +37,7 @@ export default function RenterLayout() {
     localStorage.removeItem("role");
 
     setCurrentUser(null);
-    navigate("/login");
+    navigate("/");
   };
 
   const getInitials = (name) => {
@@ -63,7 +63,27 @@ export default function RenterLayout() {
       ),
       disabled: true,
     },
+
     { type: "divider" },
+
+    {
+      key: "booking-list",
+      label: "Quản lý Đặt phòng",
+      onClick: () => navigate("/booking-list"),
+    },
+    {
+      key: "contract",
+      label: "Quản lý Hợp đồng",
+      onClick: () => navigate("/contract"),
+    },
+    {
+      key: "change-password",
+      label: "Đổi mật khẩu",
+      onClick: () => navigate("/change-password"),
+    },
+
+    { type: "divider" },
+
     {
       key: "logout",
       label: <span style={{ color: "red" }}>Đăng xuất</span>,
@@ -83,8 +103,8 @@ export default function RenterLayout() {
         <nav className="nav nav-desktop">
           <Link to="/">Trang chủ</Link>
           <Link to="/rooms">Tìm phòng</Link>
-          <Link to="/about">Giới thiệu</Link>
-          <Link to="/contact">Hỗ trợ</Link>
+          <Link to="/help">Hỗ trợ</Link>
+          <Link to="/contact">Liên Hệ</Link>
         </nav>
 
         {/* DESKTOP AUTH */}

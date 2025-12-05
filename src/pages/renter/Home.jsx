@@ -205,24 +205,42 @@ export default function Home() {
         <h2 className="section-title">Khu vực nổi bật</h2>
         <Row gutter={[24, 24]}>
           {[
-            "Hà Nội",
-            "TP.HCM",
-            "Đà Nẵng",
-            "Cần Thơ",
-            "Bình Dương",
-            "Hải Phòng",
+            {
+              name: "Hà Nội",
+              img: "https://cellphones.com.vn/sforum/wp-content/uploads/2024/01/dia-diem-du-lich-o-ha-noi-1.jpg",
+            },
+            {
+              name: "TP.HCM",
+              img: "https://media-cdn-v2.laodong.vn/Storage/NewsPortal/2023/1/17/1139308/Du-Lich-Truc-Thang.jpg",
+            },
+            {
+              name: "Đà Nẵng",
+              img: "https://cdn-media.sforum.vn/storage/app/media/ctvseo_MH/%E1%BA%A3nh%20%C4%91%E1%BA%B9p%20%C4%91%C3%A0%20n%E1%BA%B5ng/anh-dep-da-nang-thumb.jpg",
+            },
+            {
+              name: "Cần Thơ",
+              img: "https://cdn-media.sforum.vn/storage/app/media/ctv_seo4/danh-lam-thang-canh-can-tho-thumb.jpg",
+            },
+            {
+              name: "Bình Dương",
+              img: "https://cdn-media.sforum.vn/storage/app/media/ctvseo_MH/%E1%BA%A3nh%20b%C3%ACnh%20d%C6%B0%C6%A1ng/anh-dep-binh-duong-thumbnail.jpg",
+            },
+            {
+              name: "Hải Phòng",
+              img: "https://bhd.1cdn.vn/2025/07/07/cau-hoang-van-thu-1-6ca5b1e8b315a843ba4a8484b77c83e9.jpg",
+            },
           ].map((city) => (
-            <Col xs={12} md={8} key={city}>
+            <Col xs={12} md={8} key={city.name}>
               <div
                 className="location-card"
                 onClick={() =>
-                  nav("/rooms?keyword=" + encodeURIComponent(city))
+                  nav("/rooms?keyword=" + encodeURIComponent(city.name))
                 }
               >
-                <img src={`https://placehold.co/800x500?text=${city}`} />
+                <img src={city.img} />
                 <div className="location-overlay">
                   <EnvironmentOutlined />
-                  <span>{city}</span>
+                  <span>{city.name}</span>
                 </div>
               </div>
             </Col>
@@ -236,7 +254,13 @@ export default function Home() {
 
         <Row gutter={[24, 24]}>
           {rooms.map((room) => (
-            <Col xs={24} sm={12} md={8} key={room.id}>
+            <Col
+              xs={24}
+              sm={12}
+              md={8}
+              key={room.id}
+              onClick={() => nav(`/rooms/${room.id}`)}
+            >
               <Card
                 hoverable
                 className="room-card"
@@ -263,14 +287,6 @@ export default function Home() {
                 <p className="room-price">
                   {room.price.toLocaleString("vi-VN")}₫/tháng
                 </p>
-
-                <Button
-                  type="primary"
-                  block
-                  onClick={() => nav(`/rooms/${room.id}`)}
-                >
-                  Xem chi tiết
-                </Button>
               </Card>
             </Col>
           ))}

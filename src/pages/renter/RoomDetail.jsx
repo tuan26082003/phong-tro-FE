@@ -89,7 +89,7 @@ export default function RoomDetail() {
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    window.scroll(0, 0);
   }, [id]);
 
   if (loading)
@@ -133,19 +133,74 @@ export default function RoomDetail() {
         padding: "0 16px",
       }}
     >
-      {/* BACK */}
-      <Button
-        type="link"
-        icon={<ArrowLeftOutlined />}
-        style={{ paddingLeft: 0, marginBottom: 16 }}
-        onClick={() => navigate("/rooms")}
-      >
-        Quay lại danh sách phòng
-      </Button>
+      {/* ================= BREADCRUMB WITH IMAGE ================= */}
+      <div style={{ width: "100%", marginBottom: 28 }}>
+        <div
+          style={{
+            height: 300,
+            width: "100%",
+            borderRadius: 12,
+            overflow: "hidden",
+            position: "relative",
+            backgroundImage:
+              "url(https://images.unsplash.com/photo-1590490360182-c33d57733427)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            color: "#fff",
+            textAlign: "center",
+          }}
+        >
+          {/* Overlay */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(0,0,0,0.45)",
+            }}
+          />
 
-      {/* TOP: 2 CỘT – TRÁI ẢNH, PHẢI THÔNG TIN */}
+          {/* Breadcrumb */}
+
+          {/* Title + Address */}
+          <div style={{ position: "absolute", textAlign: "center" }}>
+            <div style={{ fontSize: 30, fontWeight: 700 }}>{room.name}</div>
+            <br />
+            <div
+              style={{
+                position: "relative",
+                fontSize: 17,
+              }}
+            >
+              <span
+                style={{ cursor: "pointer", color: "#dbe8ff" }}
+                onClick={() => navigate("/")}
+              >
+                Trang chủ
+              </span>
+
+              <span style={{ margin: "0 6px" }}>›</span>
+
+              <span
+                style={{ cursor: "pointer", color: "#dbe8ff" }}
+                onClick={() => navigate("/rooms")}
+              >
+                Phòng
+              </span>
+
+              <span style={{ margin: "0 6px" }}>›</span>
+
+              <span style={{ color: "#fff" }}>{room.name}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* TOP: 2 CỘT */}
       <Row gutter={[24, 24]}>
-        {/* ẢNH (tối đa ~50% width) */}
+        {/* ẢNH */}
         <Col xs={24} md={12}>
           <Card
             style={{
@@ -175,7 +230,7 @@ export default function RoomDetail() {
           </Card>
         </Col>
 
-        {/* THÔNG TIN CHÍNH */}
+        {/* THÔNG TIN */}
         <Col xs={24} md={12}>
           <Card
             style={{
@@ -212,7 +267,7 @@ export default function RoomDetail() {
                 </Text>
                 <Text type="secondary" style={{ fontSize: 13 }}>
                   Tiền cọc:{" "}
-                  <strong>{room.deposit.toLocaleString("vi-VN")}₫</strong>
+                  <strong>{room.deposit?.toLocaleString("vi-VN")}₫</strong>
                 </Text>
               </div>
             </div>
@@ -277,6 +332,11 @@ export default function RoomDetail() {
               block
               style={{ marginTop: 16 }}
               disabled={room.status !== "AVAILABLE"}
+              onClick={() =>
+                navigate("/booking", {
+                  state: { room }, // TRUYỀN TOÀN BỘ OBJECT ROOM SANG BOOKING
+                })
+              }
             >
               Đặt thuê ngay
             </Button>
@@ -284,7 +344,7 @@ export default function RoomDetail() {
         </Col>
       </Row>
 
-      {/* DƯỚI: MÔ TẢ, TIỆN ÍCH, DỊCH VỤ */}
+      {/* DƯỚI: MÔ TẢ + TIỆN ÍCH + DỊCH VỤ */}
       <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
         <Col xs={24} md={14}>
           <Card
@@ -309,7 +369,7 @@ export default function RoomDetail() {
           </Card>
         </Col>
 
-        {/* DỊCH VỤ THEO PHÒNG */}
+        {/* Dịch vụ */}
         <Col xs={24} md={10}>
           <Card
             style={{ borderRadius: 12 }}

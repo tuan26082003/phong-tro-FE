@@ -15,7 +15,7 @@ export default function OwnerBooking() {
 
   const [pagination, setPagination] = useState({
     page: 0,
-    size: 10,
+    size: 12,
     total: 0,
   });
 
@@ -139,17 +139,17 @@ export default function OwnerBooking() {
     {
       title: "ID",
       dataIndex: "id",
-      render: (t) => <strong>#{t}</strong>,
+      render: (t) => <strong>{t}</strong>,
     },
     {
       title: "Phòng",
-      dataIndex: "roomId",
-      render: (t) => <span>#{t}</span>,
+      dataIndex: "roomName",
+      render: (t) => <span>{t}</span>,
     },
     {
       title: "Người đặt",
-      dataIndex: "userId",
-      render: (t) => <span>User #{t}</span>,
+      dataIndex: "nameUser",
+      render: (t) => <span>{t}</span>,
     },
     {
       title: "Ngày thuê",
@@ -204,6 +204,7 @@ export default function OwnerBooking() {
           pageSize: pagination.size,
           total: pagination.total,
           onChange: (p) => setPagination({ ...pagination, page: p - 1 }),
+          style: { textAlign: "center", marginTop: 16 },
         }}
       />
 

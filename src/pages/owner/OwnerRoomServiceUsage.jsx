@@ -36,7 +36,7 @@ export default function OwnerRoomServiceUsage() {
 
   const [pagination, setPagination] = useState({
     page: 0,
-    size: 10,
+    size: 12,
     total: 0,
   });
 
@@ -118,8 +118,7 @@ export default function OwnerRoomServiceUsage() {
   const openEdit = (record) => {
     form.setFieldsValue({
       ...record,
-      month: record.month ? dayjs(record.month) : null,
-      usedAt: record.usedAt ? dayjs(record.usedAt) : null,
+      month: record.month ? dayjs(record.month, "YYYY-MM") : null,
       roomId: record.roomId,
       roomServiceId: record.roomServiceId,
     });
@@ -137,8 +136,7 @@ export default function OwnerRoomServiceUsage() {
 
     const payload = {
       ...values,
-      month: values.month ? values.month.format("YYYY-MM-DD") : null,
-      usedAt: values.usedAt ? values.usedAt.toISOString() : null,
+      month: values.month ? values.month.format("YYYY-MM") : null,
     };
 
     try {
@@ -182,7 +180,6 @@ export default function OwnerRoomServiceUsage() {
     {
       title: "Tên dịch vụ",
       dataIndex: "name",
-      render: (t) => <strong>{t}</strong>,
     },
     {
       title: "Loại",
@@ -192,12 +189,14 @@ export default function OwnerRoomServiceUsage() {
     {
       title: "Phòng",
       dataIndex: "roomName",
-      render: (v) => <Tag color="purple">{v}</Tag>,
     },
     {
       title: "Dịch vụ",
       dataIndex: "roomServiceName",
-      render: (v) => <Tag color="cyan">{v}</Tag>,
+    },
+    {
+      title: "Tháng",
+      dataIndex: "month",
     },
     {
       title: "Cũ",
@@ -256,9 +255,9 @@ export default function OwnerRoomServiceUsage() {
           picker="month"
           placeholder="Tháng..."
           style={{ width: "100%" }}
-          value={query.month ? dayjs(query.month) : null}
+          value={query.month ? dayjs(query.month, "YYYY-MM") : null}
           onChange={(v) =>
-            setQuery({ ...query, month: v ? v.format("YYYY-MM-DD") : "" })
+            setQuery({ ...query, month: v ? v.format("YYYY-MM") : "" })
           }
         />
 
@@ -336,10 +335,6 @@ export default function OwnerRoomServiceUsage() {
 
             <Form.Item name="month" label="Tháng">
               <DatePicker picker="month" style={{ width: "100%" }} />
-            </Form.Item>
-
-            <Form.Item name="usedAt" label="Ngày sử dụng">
-              <DatePicker showTime style={{ width: "100%" }} />
             </Form.Item>
 
             <Form.Item name="roomId" label="Phòng" rules={[{ required: true }]}>

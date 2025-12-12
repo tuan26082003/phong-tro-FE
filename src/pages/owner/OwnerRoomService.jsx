@@ -29,7 +29,7 @@ export default function OwnerRoomServices() {
 
   const [pagination, setPagination] = useState({
     page: 0,
-    size: 10,
+    size: 12,
     total: 0,
     totalPages: 0,
   });
@@ -150,28 +150,32 @@ export default function OwnerRoomServices() {
     }
   };
 
-  const assignService = async (serviceId) => {
+  const assignService = async (service) => {
     try {
       await axiosClient.post(`/api/room-services/assign`, {
-        serviceId,
+        serviceId: service.id,
         roomId: assignRoomId,
       });
 
       message.success("Đã gán dịch vụ");
 
       loadAssignList(assignRoomId);
-    } catch {
-      message.error("Không thể gán dịch vụ");
+    } catch (err) {
+      console.error("Assign error:", err);
+      message.error(err.response?.data?.message || "Không thể gán dịch vụ");
     }
   };
 
   const unassignService = async (assignId) => {
     try {
+      console.log("Deleting assign ID:", assignId);
       await axiosClient.delete(`/api/room-services/assign/${assignId}`);
       message.success("Đã gỡ dịch vụ");
       loadAssignList(assignRoomId);
-    } catch {
-      message.error("Không thể gỡ dịch vụ");
+    } catch (err) {
+      console.error("Unassign error:", err);
+      console.error("Response:", err.response?.data);
+      message.error(err.response?.data?.message || "Không thể gỡ dịch vụ");
     }
   };
 
@@ -180,11 +184,6 @@ export default function OwnerRoomServices() {
       title: "Tên dịch vụ",
       dataIndex: "name",
       render: (t) => <strong>{t}</strong>,
-    },
-    {
-      title: "Giá",
-      dataIndex: "price",
-      render: (v) => v.toLocaleString("vi-VN") + "₫",
     },
     {
       title: "Mô tả",
@@ -235,6 +234,7 @@ export default function OwnerRoomServices() {
           pageSize: pagination.size,
           total: pagination.total,
           onChange: (p) => setPagination({ ...pagination, page: p - 1 }),
+          style: { textAlign: "center", marginTop: 16 },
         }}
         bordered
       />
@@ -247,29 +247,17 @@ export default function OwnerRoomServices() {
         width={600}
       >
         <Form layout="vertical" form={form}>
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}
+          <Form.Item
+            name="name"
+            label="Tên dịch vụ"
+            rules={[{ required: true }]}
           >
-            <Form.Item
-              name="name"
-              label="Tên dịch vụ"
-              rules={[{ required: true }]}
-            >
-              <Input />
-            </Form.Item>
+            <Input />
+          </Form.Item>
 
-            <Form.Item name="price" label="Giá" rules={[{ required: true }]}>
-              <InputNumber style={{ width: "100%" }} min={0} />
-            </Form.Item>
-
-            <Form.Item
-              name="description"
-              label="Mô tả"
-              style={{ gridColumn: "1 / 3" }}
-            >
-              <Input />
-            </Form.Item>
-          </div>
+          <Form.Item name="description" label="Mô tả">
+            <Input />
+          </Form.Item>
         </Form>
       </Modal>
 
@@ -328,7 +316,7 @@ export default function OwnerRoomServices() {
                 }}
               >
                 <span>
-                  {s.serviceName} – {s.price.toLocaleString("vi-VN")}₫
+                  {s.serviceName}
                 </span>
 
                 <Button danger onClick={() => unassignService(s.id)}>
@@ -345,7 +333,7 @@ export default function OwnerRoomServices() {
                   key={svc.id}
                   color="blue"
                   style={{ cursor: "pointer", marginBottom: 8 }}
-                  onClick={() => assignService(svc.id)}
+                  onClick={() => assignService(svc)}
                 >
                   {svc.name}
                 </Tag>

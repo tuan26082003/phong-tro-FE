@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Modal, Space, Tag, Descriptions } from "antd";
+import { Table, Button, Modal, Space, Descriptions } from "antd";
 import {
   DeleteOutlined,
   EyeOutlined,
-  SendOutlined,
   DownloadOutlined,
 } from "@ant-design/icons";
 import axiosClient from "../../api/axiosClient";
@@ -18,7 +17,7 @@ export default function OwnerInvoice() {
 
   const [pagination, setPagination] = useState({
     page: 0,
-    size: 10,
+    size: 12,
     total: 0,
   });
 
@@ -93,15 +92,42 @@ export default function OwnerInvoice() {
 
   const downloadInvoice = async (id) => {
     try {
-      const res = await axiosClient.get(`${API}/${id}/download`);
+      console.log('Downloading invoice ID:', id);
+      console.log('User token:', localStorage.getItem('accessToken')?.substring(0, 20) + '...');
+      
+      const res = await axiosClient.get(`${API}/${id}/download`, {
+        responseType: "blob",
+      });
 
-      // res.data là array string → link file
-      const fileUrl = res.data[0];
+      const contentType = res.headers["content-type"] || "";
+      if (!contentType.includes("application/pdf")) {
+        const text = await res.data.text?.().catch(() => null);
+        console.error("Server không trả PDF, content-type:", contentType, "body:", text);
+        toast.error("Server không trả đúng file PDF");
+        return;
+      }
 
-      window.open(fileUrl, "_blank");
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `invoice_${id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+
       toast.success("Đã tải hóa đơn");
     } catch (err) {
-      logErr(err, "Không tải được file hóa đơn");
+      console.error("Download error details:", err);
+      console.error("Status:", err.response?.status);
+      console.error("Error message:", err.response?.data);
+      
+      if (err.response?.status === 403) {
+        toast.error("Bạn không có quyền tải hóa đơn này");
+      } else {
+        toast.error("Không tải được file hóa đơn");
+      }
     }
   };
 
@@ -132,18 +158,6 @@ export default function OwnerInvoice() {
       render: (v) => v.toLocaleString("vi-VN") + "₫",
     },
     {
-      title: "Trạng thái",
-      dataIndex: "status",
-      render: (s) => {
-        let color = "blue";
-        if (s === "PAID") color = "green";
-        if (s === "CREATED") color = "gold";
-        if (s === "CANCELLED") color = "red";
-
-        return <Tag color={color}>{s}</Tag>;
-      },
-    },
-    {
       title: "Hành động",
       render: (record) => (
         <Space>
@@ -151,12 +165,6 @@ export default function OwnerInvoice() {
             type="text"
             icon={<EyeOutlined style={{ color: "blue" }} />}
             onClick={() => viewDetail(record.id)}
-          />
-
-          <Button
-            type="text"
-            icon={<SendOutlined style={{ color: "orange" }} />}
-            onClick={() => sendInvoice(record.id)}
           />
 
           <Button
@@ -216,10 +224,6 @@ export default function OwnerInvoice() {
               {detailData.totalAmount.toLocaleString("vi-VN")}₫
             </Descriptions.Item>
 
-            <Descriptions.Item label="Trạng thái">
-              {detailData.status}
-            </Descriptions.Item>
-
             <Descriptions.Item label="Loại thanh toán">
               {detailData.payment.paymentType}
             </Descriptions.Item>
@@ -248,7 +252,7 @@ export default function OwnerInvoice() {
               <Button
                 icon={<DownloadOutlined />}
                 onClick={() =>
-                  window.open(detailData.contract.contractFile, "_blank")
+                  window.open(`http://localhost:8080${detailData.contract.contractFile}`, "_blank")
                 }
               >
                 Tải file hợp đồng

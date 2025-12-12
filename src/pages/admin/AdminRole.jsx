@@ -7,7 +7,7 @@ import axiosClient from "../../api/axiosClient";
 
 const API = "/api/role";
 
-export default function OwnerRole() {
+export default function AdminRole() {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -22,35 +22,24 @@ export default function OwnerRole() {
   // LOG AXIOS ERROR FULL DETAIL
   // =========================================
   const logAxiosError = (err, customMsg) => {
-    console.error("========= AXIOS ERROR =========");
-
-    console.error("REQUEST URL:", err.config?.url);
-    console.error("REQUEST METHOD:", err.config?.method);
-    console.error("REQUEST HEADERS:", err.config?.headers);
-    console.error("REQUEST BODY:", err.config?.data);
-
+    
     if (err.response) {
-      console.error("RESPONSE STATUS:", err.response.status);
-      console.error("RESPONSE HEADERS:", err.response.headers);
-      console.error("RESPONSE DATA:", err.response.data);
 
       message.error(
         customMsg || err.response.data.message || `Lỗi ${err.response.status}`
       );
     } else if (err.request) {
-      console.error("NO RESPONSE RECEIVED:", err.request);
+      
       message.error("Không nhận được phản hồi từ server");
     } else {
-      console.error("REQUEST SETUP ERROR:", err.message);
+   
       message.error(err.message || "Lỗi request FE");
     }
 
     console.error("FULL ERROR OBJECT:", err);
   };
 
-  // =========================================
-  // LOAD ROLES
-  // =========================================
+  
   const loadRoles = async () => {
     try {
       setLoading(true);

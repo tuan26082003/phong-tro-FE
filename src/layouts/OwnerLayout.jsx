@@ -23,7 +23,7 @@ const ownerMenu = [
   {
     key: "dashboard",
     icon: <HomeOutlined />,
-    label: <Link to="/admin/dashboard">Tổng quan</Link>,
+    label: <Link to="/owner/dashboard">Tổng quan</Link>,
   },
 
   // PHÒNG & DỊCH VỤ
@@ -34,19 +34,23 @@ const ownerMenu = [
   {
     key: "rooms",
     icon: <ApartmentOutlined />,
-    label: <Link to="/admin/rooms">Quản lý phòng</Link>,
+    label: <Link to="/owner/rooms">Quản lý phòng</Link>,
   },
   {
     key: "services",
     icon: <ThunderboltOutlined />,
-    label: <Link to="/admin/services">Quản lý dịch vụ</Link>,
+    label: <Link to="/owner/services">Quản lý dịch vụ</Link>,
   },
   {
     key: "room-service-usages",
     icon: <ClusterOutlined />,
-    label: <Link to="/admin/room-service-usages">Số liệu sử dụng</Link>,
+    label: <Link to="/owner/room-service-usages">Số liệu sử dụng</Link>,
   },
-
+{
+    key: "confirm-payments-monthly",
+    icon: <ClusterOutlined />,
+    label: <Link to="/owner/confirm-payments-monthly">Thanh toán theo tháng</Link>,
+  },
   // HÓA ĐƠN & THANH TOÁN
   {
     type: "group",
@@ -55,12 +59,12 @@ const ownerMenu = [
   {
     key: "invoices",
     icon: <FileTextOutlined />,
-    label: <Link to="/admin/invoices">Hóa đơn</Link>,
+    label: <Link to="/owner/invoices">Hóa đơn</Link>,
   },
   {
     key: "payments",
     icon: <DollarOutlined />,
-    label: <Link to="/admin/payments">Thanh toán</Link>,
+    label: <Link to="/owner/payments">Thanh toán</Link>,
   },
 
   // KHÁCH THUÊ
@@ -71,12 +75,12 @@ const ownerMenu = [
   {
     key: "bookings",
     icon: <CalendarOutlined />,
-    label: <Link to="/admin/bookings">Đặt phòng</Link>,
+    label: <Link to="/owner/bookings">Đặt phòng</Link>,
   },
   {
     key: "contracts",
     icon: <BarChartOutlined />,
-    label: <Link to="/admin/contracts">Hợp đồng</Link>,
+    label: <Link to="/owner/contracts">Hợp đồng</Link>,
   },
 
   // HỆ THỐNG
@@ -87,17 +91,13 @@ const ownerMenu = [
   {
     key: "banks",
     icon: <DatabaseOutlined />,
-    label: <Link to="/admin/banks">Ngân hàng</Link>,
+    label: <Link to="/owner/banks">Ngân hàng</Link>,
   },
-  {
-    key: "role",
-    icon: <SettingOutlined />,
-    label: <Link to="/admin/role">Phân quyền</Link>,
-  },
+
   {
     key: "users",
     icon: <UserOutlined />,
-    label: <Link to="/admin/users">Người dùng</Link>,
+    label: <Link to="/owner/users">Người dùng</Link>,
   },
 ];
 
@@ -105,14 +105,14 @@ const userMenu = {
   items: [
     {
       key: "change-password",
-      label: <Link to="/admin/change-password">Đổi mật khẩu</Link>,
+      label: <Link to="/owner/change-password">Đổi mật khẩu</Link>,
     },
     { key: "logout", danger: true, label: "Đăng xuất" },
   ],
 };
 
 const chatMenu = {
-  items: [{ key: "chats", label: <Link to="/admin/chats">Tin nhắn</Link> }],
+  items: [{ key: "chats", label: <Link to="/owner/chats">Tin nhắn</Link> }],
 };
 
 export default function OwnerLayout() {
@@ -122,7 +122,7 @@ export default function OwnerLayout() {
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
-    navigate("/admin/login", { replace: true });
+    navigate("/", { replace: true });
   };
 
   return (

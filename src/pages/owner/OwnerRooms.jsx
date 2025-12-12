@@ -10,6 +10,7 @@ import {
   Select,
   message,
   Upload,
+  Tag,
 } from "antd";
 
 import {
@@ -30,12 +31,12 @@ export default function OwnerRooms() {
 
   const [pagination, setPagination] = useState({
     page: 0,
-    size: 10,
+    size: 12,
     total: 0,
     totalPages: 0,
   });
 
-  const [query, setQuery] = useState({ q: "", sort: "asc" });
+  const [query, setQuery] = useState({ q: "", sort: "asc", type: "" });
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
@@ -65,7 +66,15 @@ export default function OwnerRooms() {
         sort: query.sort,
       };
 
+      // Thêm type vào params nếu có
+      if (query.type) {
+        params.type = query.type;
+      }
+
       const res = await axiosClient.get(API, { params });
+
+      console.log("API Response:", res.data);
+      console.log("First room:", res.data.data?.[0]);
 
       setRooms(res.data.data || []);
 
@@ -95,7 +104,18 @@ export default function OwnerRooms() {
   const openEdit = (record) => {
     setEditData(record);
     setFileList([]); // luôn yêu cầu upload lại file vì backend yêu cầu files bắt buộc
-    form.setFieldsValue(record);
+    form.setFieldsValue({
+      name: record.name,
+      type: record.type,
+      price: record.price,
+      deposit: record.deposit,
+      area: record.area,
+      capacity: record.capacity,
+      address: record.address,
+      description: record.description,
+      facilities: record.facilities || [],
+      status: record.status,
+    });
     setModalOpen(true);
   };
 
@@ -106,9 +126,6 @@ export default function OwnerRooms() {
 
   const buildMultipart = (values) => {
     const fd = new FormData();
-
-    // remove status (backend không cho phép)
-    delete values.status;
 
     fd.append("data", JSON.stringify(values));
 
@@ -157,6 +174,27 @@ export default function OwnerRooms() {
       render: (t) => <strong>{t}</strong>,
     },
     {
+      title: "Loại phòng",
+      dataIndex: "type",
+      render: (v, record) => {
+        console.log("Type value:", v, "Full record:", record);
+        const typeMap = {
+          ROOM: "Phòng trọ",
+          HOUSE: "Nhà nguyên căn",
+          APARTMENT: "Căn hộ",
+        };
+        
+        // Xử lý cả trường hợp v là string hoặc object
+        const typeValue = typeof v === 'object' && v !== null ? v.name || v.value : v;
+        
+        return typeValue ? (
+          typeMap[typeValue] || typeValue
+        ) : (
+          <span style={{ color: "#999" }}>Chưa set</span>
+        );
+      },
+    },
+    {
       title: "Giá",
       dataIndex: "price",
       render: (v) => v.toLocaleString("vi-VN") + "₫",
@@ -169,6 +207,23 @@ export default function OwnerRooms() {
     {
       title: "Số người",
       dataIndex: "capacity",
+    },
+    {
+      title: "Tiện ích",
+      dataIndex: "facilities",
+      render: (facilities) => (
+        <>
+          {facilities && facilities.length > 0 ? (
+            facilities.map((f, idx) => (
+              <Tag key={idx} color="blue" style={{ marginBottom: 4 }}>
+                {f}
+              </Tag>
+            ))
+          ) : (
+            <span style={{ color: "#999" }}>Chưa có</span>
+          )}
+        </>
+      ),
     },
     {
       title: "Trạng thái",
@@ -206,6 +261,18 @@ export default function OwnerRooms() {
         />
 
         <Select
+          placeholder="Loại phòng"
+          allowClear
+          value={query.type || undefined}
+          onChange={(v) => setQuery({ ...query, type: v || "" })}
+          style={{ width: 180 }}
+        >
+          <Select.Option value="ROOM">Phòng trọ</Select.Option>
+          <Select.Option value="HOUSE">Nhà nguyên căn</Select.Option>
+          <Select.Option value="APARTMENT">Căn hộ</Select.Option>
+        </Select>
+
+        <Select
           value={query.sort}
           onChange={(v) => setQuery({ ...query, sort: v })}
           style={{ width: 130 }}
@@ -232,6 +299,7 @@ export default function OwnerRooms() {
           pageSize: pagination.size,
           total: pagination.total,
           onChange: (p) => setPagination({ ...pagination, page: p - 1 }),
+          style: { textAlign: "center", marginTop: 16 },
         }}
       />
 
@@ -256,6 +324,18 @@ export default function OwnerRooms() {
               rules={[{ required: true }]}
             >
               <Input />
+            </Form.Item>
+
+            <Form.Item
+              name="type"
+              label="Loại phòng"
+              rules={[{ required: true, message: "Vui lòng chọn loại phòng" }]}
+            >
+              <Select placeholder="Chọn loại phòng">
+                <Select.Option value="ROOM">Phòng trọ</Select.Option>
+                <Select.Option value="HOUSE">Nhà nguyên căn</Select.Option>
+                <Select.Option value="APARTMENT">Căn hộ</Select.Option>
+              </Select>
             </Form.Item>
 
             <Form.Item label="Ảnh (bắt buộc)">
@@ -288,10 +368,38 @@ export default function OwnerRooms() {
             <Form.Item name="address" label="Địa chỉ">
               <Input />
             </Form.Item>
+
+            {editData && (
+              <Form.Item
+                name="status"
+                label="Trạng thái"
+                rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
+              >
+                <Select placeholder="Chọn trạng thái">
+                  <Select.Option value="AVAILABLE">Còn trống</Select.Option>
+                  <Select.Option value="RENTED">Đã thuê</Select.Option>
+                  <Select.Option value="MAINTENANCE">Bảo trì</Select.Option>
+                  <Select.Option value="RESERVED">Đã đặt trước</Select.Option>
+                </Select>
+              </Form.Item>
+            )}
           </div>
 
           <Form.Item name="description" label="Mô tả">
             <Input.TextArea rows={3} />
+          </Form.Item>
+
+          <Form.Item
+            name="facilities"
+            label="Tiện ích"
+            tooltip="Nhấn Enter sau mỗi tiện ích"
+          >
+            <Select
+              mode="tags"
+              placeholder="Nhập tiện ích (VD: Wifi, Điều hòa, Nóng lạnh...)"
+              style={{ width: "100%" }}
+              tokenSeparators={[',']}
+            />
           </Form.Item>
         </Form>
       </Modal>

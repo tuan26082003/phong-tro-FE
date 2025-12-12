@@ -26,7 +26,7 @@ export default function OwnerPayment() {
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     page: 0,
-    size: 10,
+    size: 12,
     total: 0,
   });
 
@@ -177,13 +177,16 @@ export default function OwnerPayment() {
         paymentStatus: status,
       });
 
-      if (res.data.status !== 0) throw { response: { data: res.data } };
-
-      toast.success("Cập nhật trạng thái thành công");
+      // Backend trả về {code: 201, data: {...}, message: "..."}
+      // Axios chỉ throw error khi HTTP status >= 400, nên không cần check thêm
+      
+      const message = res.data.message || "Cập nhật trạng thái thành công";
+      toast.success(message);
       setModalUpdateOpen(false);
       loadPayments();
     } catch (err) {
-      logErr(err, "Không cập nhật trạng thái");
+      const errorMessage = err.response?.data?.message || "Không thể cập nhật trạng thái";
+      toast.error(errorMessage);
     }
   };
 
@@ -318,6 +321,7 @@ export default function OwnerPayment() {
           pageSize: pagination.size,
           total: pagination.total,
           onChange: (p) => setPagination({ ...pagination, page: p - 1 }),
+          style: { textAlign: "center", marginTop: 16 },
         }}
       />
 

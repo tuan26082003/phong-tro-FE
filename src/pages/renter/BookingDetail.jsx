@@ -25,6 +25,7 @@ import {
 } from "@ant-design/icons";
 import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
+import { getImageUrl } from "../../utils/imageHelper";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -208,7 +209,7 @@ export default function BookingDetail() {
               <img
                 src={
                   room.images?.length
-                    ? room.images[0]
+                    ? getImageUrl(room.images[0])
                     : "https://placehold.co/600x400?text=Room"
                 }
                 alt="room"

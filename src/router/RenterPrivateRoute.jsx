@@ -15,5 +15,7 @@ export default function RenterPrivateRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
 
+  console.log("RenterPrivateRoute: Authenticated as RENTER");
+
   return children;
 }

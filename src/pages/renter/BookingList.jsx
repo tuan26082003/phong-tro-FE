@@ -32,7 +32,7 @@ export default function BookingList() {
 
   const [pagination, setPagination] = useState({
     page: 0,
-    size: 9,
+    size: 12,
     total: 0,
   });
 

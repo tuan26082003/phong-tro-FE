@@ -15,9 +15,10 @@ import {
   Typography,
   Empty,
 } from "antd";
-import { SearchOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import { SearchOutlined, EnvironmentOutlined, HomeOutlined, TeamOutlined } from "@ant-design/icons";
 import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
+import { getImageUrl } from "../../utils/imageHelper";
 
 const API = "/api/search/rooms/advanced";
 const { Option } = Select;
@@ -31,6 +32,7 @@ export default function Search() {
   const [loading, setLoading] = useState(false);
 
   const [keyword, setKeyword] = useState("");
+  const [type, setType] = useState(""); // ROOM / HOUSE / APARTMENT
   const [minArea, setMinArea] = useState();
   const [maxArea, setMaxArea] = useState();
   const [minCapacity, setMinCapacity] = useState();
@@ -38,7 +40,7 @@ export default function Search() {
 
   const [pagination, setPagination] = useState({
     page: 0, // 0-based cho API
-    size: 9,
+    size: 12,
     total: 0,
   });
 
@@ -65,6 +67,7 @@ export default function Search() {
     const params = new URLSearchParams(location.search);
 
     const kwParam = params.get("keyword") || params.get("q") || "";
+    const typeParam = params.get("type") || params.get("roomType") || ""; // Hỗ trợ cả type và roomType
     const minAreaParam = params.get("minArea");
     const maxAreaParam = params.get("maxArea");
     const minCapacityParam = params.get("minCapacity");
@@ -72,6 +75,7 @@ export default function Search() {
     const pageParam = params.get("page"); // 1-based trên URL
 
     setKeyword(kwParam);
+    setType(typeParam);
     setMinArea(minAreaParam ? Number(minAreaParam) : undefined);
     setMaxArea(maxAreaParam ? Number(maxAreaParam) : undefined);
     setMinCapacity(minCapacityParam ? Number(minCapacityParam) : undefined);
@@ -93,6 +97,7 @@ export default function Search() {
       };
 
       if (keyword) params.keyword = keyword;
+      if (type) params.type = type;
       if (status) params.status = status;
       if (minArea) params.minArea = minArea;
       if (maxArea) params.maxArea = maxArea;
@@ -128,6 +133,7 @@ export default function Search() {
     pagination.page,
     pagination.size,
     keyword,
+    type,
     minArea,
     maxArea,
     minCapacity,
@@ -137,6 +143,7 @@ export default function Search() {
   const applyFilter = () => {
     const params = new URLSearchParams();
     if (keyword) params.set("keyword", keyword);
+    if (type) params.set("type", type);
     if (minArea) params.set("minArea", String(minArea));
     if (maxArea) params.set("maxArea", String(maxArea));
     if (minCapacity) params.set("minCapacity", String(minCapacity));
@@ -155,8 +162,35 @@ export default function Search() {
   };
 
   const getStatusTag = (s) => {
-    if (s === "AVAILABLE") return <Tag color="green">Còn trống</Tag>;
-    if (s === "OCCUPIED") return <Tag color="red">Đã thuê</Tag>;
+    if (s === "AVAILABLE") 
+      return (
+        <Tag 
+          color="success" 
+          style={{ 
+            fontWeight: 600,
+            fontSize: 13,
+            padding: '4px 12px',
+            borderRadius: 6,
+            boxShadow: '0 2px 8px rgba(82, 196, 26, 0.3)'
+          }}
+        >
+          ✓ Còn trống
+        </Tag>
+      );
+    if (s === "OCCUPIED") 
+      return (
+        <Tag 
+          color="error"
+          style={{ 
+            fontWeight: 500,
+            fontSize: 13,
+            padding: '4px 12px',
+            borderRadius: 6
+          }}
+        >
+          Đã thuê
+        </Tag>
+      );
     return <Tag>{s}</Tag>;
   };
 
@@ -187,7 +221,7 @@ export default function Search() {
         }}
       >
         <Row gutter={[16, 16]} align="middle">
-          <Col xs={24} md={8}>
+          <Col xs={24} md={6}>
             <Input
               placeholder="Từ khóa: tên phòng, địa chỉ..."
               prefix={<SearchOutlined />}
@@ -197,36 +231,50 @@ export default function Search() {
           </Col>
 
           <Col xs={12} md={4}>
+            <Select
+              style={{ width: "100%" }}
+              placeholder="Loại phòng"
+              allowClear
+              value={type || undefined}
+              onChange={(v) => setType(v || "")}
+            >
+              <Option value="ROOM">Phòng trọ</Option>
+              <Option value="HOUSE">Nhà nguyên căn</Option>
+              <Option value="APARTMENT">Căn hộ</Option>
+            </Select>
+          </Col>
+
+          <Col xs={12} md={3}>
             <InputNumber
               style={{ width: "100%" }}
-              placeholder="DT tối thiểu (m²)"
+              placeholder="DT min (m²)"
               min={0}
               value={minArea}
               onChange={setMinArea}
             />
           </Col>
 
-          <Col xs={12} md={4}>
+          <Col xs={12} md={3}>
             <InputNumber
               style={{ width: "100%" }}
-              placeholder="DT tối đa (m²)"
+              placeholder="DT max (m²)"
               min={0}
               value={maxArea}
               onChange={setMaxArea}
             />
           </Col>
 
-          <Col xs={12} md={4}>
+          <Col xs={12} md={3}>
             <InputNumber
               style={{ width: "100%" }}
-              placeholder="Sức chứa tối thiểu"
+              placeholder="Sức chứa min"
               min={1}
               value={minCapacity}
               onChange={setMinCapacity}
             />
           </Col>
 
-          <Col xs={12} md={4}>
+          <Col xs={12} md={3}>
             <Select
               style={{ width: "100%" }}
               placeholder="Trạng thái"
@@ -239,9 +287,9 @@ export default function Search() {
             </Select>
           </Col>
 
-          <Col xs={24} md={4}>
+          <Col xs={24} md={2}>
             <Button type="primary" block onClick={applyFilter}>
-              Áp dụng
+              Tìm
             </Button>
           </Col>
         </Row>
@@ -250,7 +298,7 @@ export default function Search() {
       {/* LIST */}
       <Row gutter={[24, 24]}>
         {rooms.map((room) => (
-          <Col xs={24} sm={12} md={8} key={room.id}>
+          <Col xs={24} sm={12} md={6} key={room.id}>
             <Card
               hoverable
               loading={loading}
@@ -260,91 +308,87 @@ export default function Search() {
                 height: "100%",
                 display: "flex",
                 flexDirection: "column",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                transition: "all 0.3s"
               }}
+              bodyStyle={{ padding: 16 }}
               cover={
                 <img
                   src={
                     room.images && room.images.length > 0
-                      ? room.images[0]
+                      ? getImageUrl(room.images[0])
                       : "https://placehold.co/900x600?text=Room"
                   }
                   alt={room.name}
                   style={{ height: 200, objectFit: "cover" }}
                 />
               }
+              onClick={() => navigate(`/rooms/${room.id}`)}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 4,
-                }}
-              >
-                <Text strong style={{ fontSize: 16 }}>
+              {/* Tên phòng */}
+              <div style={{ marginBottom: 8 }}>
+                <span style={{ fontSize: 17, fontWeight: 600, color: "#333" }}>
                   {room.name}
-                </Text>
+                </span>
+              </div>
+
+              {/* Tag trạng thái */}
+              <div style={{ marginBottom: 12 }}>
                 {getStatusTag(room.status)}
               </div>
 
+              {/* Địa chỉ */}
               <div
                 style={{
                   color: "#666",
-                  fontSize: 13,
-                  marginBottom: 4,
+                  fontSize: 14,
+                  marginBottom: 10,
                   display: "flex",
                   alignItems: "center",
-                  gap: 4,
+                  gap: 6,
                 }}
               >
-                <EnvironmentOutlined />
+                <EnvironmentOutlined style={{ fontSize: 16, color: "#1890ff" }} />
                 <span>{room.address}</span>
               </div>
 
-              <div
-                style={{
-                  color: "#555",
-                  fontSize: 13,
-                  marginBottom: 8,
-                }}
-              >
-                {room.area} m² · {room.capacity} người · Chủ trọ:{" "}
-                <strong>{room.ownerName}</strong>
-              </div>
-
-              {room.utilities && (
-                <div
-                  style={{
-                    color: "#888",
-                    fontSize: 12,
-                    marginBottom: 8,
-                    maxHeight: 40,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  <Text type="secondary">Tiện ích: {room.utilities}</Text>
+              {/* Thông tin phòng */}
+              <div style={{ fontSize: 14, color: "#666", marginBottom: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  <HomeOutlined style={{ fontSize: 16, color: "#52c41a" }} />
+                  <span>{room.area} m²</span>
                 </div>
-              )}
-
-              <div
-                style={{
-                  marginTop: "auto",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 12,
-                }}
-              >
-                <Text strong style={{ fontSize: 16, color: "#d4380d" }}>
-                  {room.price.toLocaleString("vi-VN")}₫/tháng
-                </Text>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <TeamOutlined style={{ fontSize: 16, color: "#fa8c16" }} />
+                  <span>{room.capacity} người</span>
+                </div>
               </div>
 
-              <Button
-                type="primary"
+              {/* Giá */}
+              <div style={{ marginTop: "auto", paddingTop: 12, borderTop: "1px solid #f0f0f0", marginBottom: 12 }}>
+                <span style={{ fontSize: 20, fontWeight: 700, color: "#d4380d" }}>
+                  {room.price?.toLocaleString("vi-VN") || "0"}₫
+                </span>
+                <span style={{ fontSize: 14, color: "#999", marginLeft: 4 }}>
+                  /tháng
+                </span>
+              </div>
+
+              {/* Nút xem chi tiết */}
+              <Button 
+                type="primary" 
                 block
-                onClick={() => navigate(`/rooms/${room.id}`)}
+                style={{
+                  background: "#1890ff",
+                  borderColor: "#1890ff",
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  height: 38
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/rooms/${room.id}`);
+                }}
               >
                 Xem chi tiết
               </Button>

@@ -25,6 +25,7 @@ import {
 } from "@ant-design/icons";
 import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
+import { getImageUrls } from "../../utils/imageHelper";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -113,10 +114,7 @@ export default function RoomDetail() {
       </div>
     );
 
-  const images =
-    room.images && room.images.length > 0
-      ? room.images
-      : ["https://placehold.co/900x900?text=Room"];
+  const images = getImageUrls(room.images);
 
   const statusTag =
     room.status === "AVAILABLE" ? (
@@ -126,13 +124,33 @@ export default function RoomDetail() {
     );
 
   return (
-    <div
-      style={{
-        maxWidth: "94%",
-        margin: "32px auto 40px",
-        padding: "0 16px",
-      }}
-    >
+    <>
+      <style>
+        {`
+          .custom-carousel-dots li button {
+            background: rgba(255, 255, 255, 0.5) !important;
+            width: 12px !important;
+            height: 12px !important;
+            border-radius: 50% !important;
+            border: 2px solid #fff !important;
+          }
+          .custom-carousel-dots li.slick-active button {
+            background: #fff !important;
+            width: 14px !important;
+            height: 14px !important;
+          }
+          .custom-carousel-dots {
+            bottom: 20px !important;
+          }
+        `}
+      </style>
+      <div
+        style={{
+          maxWidth: "94%",
+          margin: "32px auto 40px",
+          padding: "0 16px",
+        }}
+      >
       {/* ================= BREADCRUMB WITH IMAGE ================= */}
       <div style={{ width: "100%", marginBottom: 28 }}>
         <div
@@ -211,19 +229,46 @@ export default function RoomDetail() {
             }}
             bodyStyle={{ padding: 0 }}
           >
-            <Carousel autoplay>
+            <Carousel 
+              autoplay
+              dots={{
+                className: "custom-carousel-dots"
+              }}
+              dotPosition="bottom"
+            >
               {images.map((img, idx) => (
                 <div key={idx}>
-                  <img
-                    src={img}
-                    alt={`room-${idx}`}
-                    style={{
-                      width: "100%",
-                      height: 500,
-                      objectFit: "cover",
-                      display: "block",
-                    }}
-                  />
+                  <div style={{
+                    position: "relative",
+                    width: "100%",
+                    height: 500,
+                    background: "#000"
+                  }}>
+                    <img
+                      src={img}
+                      alt={`Ảnh phòng ${idx + 1}`}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        display: "block",
+                      }}
+                    />
+                    {/* Badge số ảnh */}
+                    <div style={{
+                      position: "absolute",
+                      top: 16,
+                      right: 16,
+                      background: "rgba(0,0,0,0.7)",
+                      color: "#fff",
+                      padding: "6px 12px",
+                      borderRadius: 20,
+                      fontSize: 14,
+                      fontWeight: 500
+                    }}>
+                      {idx + 1} / {images.length}
+                    </div>
+                  </div>
                 </div>
               ))}
             </Carousel>
@@ -263,7 +308,7 @@ export default function RoomDetail() {
                     display: "block",
                   }}
                 >
-                  {room.price.toLocaleString("vi-VN")}₫/tháng
+                  {room.price?.toLocaleString("vi-VN") || "0"}₫/tháng
                 </Text>
                 <Text type="secondary" style={{ fontSize: 13 }}>
                   Tiền cọc:{" "}
@@ -363,9 +408,23 @@ export default function RoomDetail() {
             <Title level={4} style={{ marginBottom: 12 }}>
               Tiện ích
             </Title>
-            <Paragraph style={{ whiteSpace: "pre-line" }}>
-              {room.utilities || "Không có thông tin tiện ích."}
-            </Paragraph>
+            {room.facilities && room.facilities.length > 0 ? (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {room.facilities.map((facility, idx) => (
+                  <Tag key={idx} color="blue" style={{ 
+                    fontSize: 14, 
+                    padding: "4px 12px",
+                    marginBottom: 8
+                  }}>
+                    {facility}
+                  </Tag>
+                ))}
+              </div>
+            ) : (
+              <Paragraph style={{ color: "#999" }}>
+                Không có thông tin tiện ích.
+              </Paragraph>
+            )}
           </Card>
         </Col>
 
@@ -396,7 +455,7 @@ export default function RoomDetail() {
                       description={
                         <Text type="secondary">
                           Giá:{" "}
-                          <strong>{item.price.toLocaleString("vi-VN")}₫</strong>
+                          <strong>{item.price?.toLocaleString("vi-VN") || "0"}₫</strong>
                         </Text>
                       }
                     />
@@ -408,5 +467,6 @@ export default function RoomDetail() {
         </Col>
       </Row>
     </div>
+    </>
   );
 }

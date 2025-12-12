@@ -15,42 +15,64 @@ export const AuthProvider = ({ children }) => {
 
   // LOGIN API
   const login = async (payload) => {
-    // payload = { email, password, platform, deviceToken, versionApp }
+    try {
+      const res = await axios.post(
+        "http://localhost:8080/auth/login", // đổi URL API nếu cần
+        payload
+      );
 
-    const res = await axios.post(
-      "http://localhost:8080/auth/login", // đổi URL API vào đây
-      payload
-    );
+      const data = res.data;
 
-    const data = res.data;
+      // Nếu backend trả dạng { status, message, ... } mà status >= 400
+      if (data.status >= 400) {
+        toast.error(data.message || "Đăng nhập thất bại");
+        return null;
+      }
 
-    if (data.status >= 400) {
-      toast.error(data.message);
-      return;
+      const userData = {
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        user: data.userResponse, // user info
+        role: data.roleName,     // VD: ADMIN / OWNER / RENTER hoặc ROLE_ADMIN...
+      };
+
+      // Lưu localStorage
+      localStorage.setItem("token", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      // Lưu vào state context
+      setUser(userData);
+
+      const role = userData.role;
+
+      // Redirect theo role
+      if (role === "ADMIN" || role === "ROLE_ADMIN") {
+        window.location.href = "/admin/dashboard";
+      } else if (role === "OWNER" || role === "ROLE_OWNER") {
+        window.location.href = "/owner/dashboard";
+      } else if (role === "RENTER" || role === "ROLE_RENTER") {
+        window.location.href = "/"; // renter về trang chủ
+      } else {
+        // role lạ -> cho về trang chủ
+        window.location.href = "/";
+      }
+
+      return userData;
+    } catch (err) {
+      console.error(err);
+      toast.error("Không thể kết nối server");
+      return null;
     }
-
-    const userData = {
-      accessToken: data.accessToken,
-      refreshToken: data.refreshToken,
-      user: data.userResponse,
-      role: data.roleName,
-    };
-
-    // Lưu localStorage
-    localStorage.setItem("token", data.accessToken);
-    localStorage.setItem("refreshToken", data.refreshToken);
-    localStorage.setItem("user", JSON.stringify(userData));
-
-    // Set vào state
-    setUser(userData);
   };
 
-  // LOGOUT
+  // LOGOUT: xóa token + về trang chủ
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     setUser(null);
+    window.location.href = "/"; // luôn về trang chủ
   };
 
   return (

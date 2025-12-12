@@ -21,6 +21,7 @@ import {
 import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
+import { getImageUrl } from "../../utils/imageHelper";
 
 const { Title, Text } = Typography;
 
@@ -157,7 +158,7 @@ export default function Booking() {
               <img
                 src={
                   room.images && room.images.length > 0
-                    ? room.images[0]
+                    ? getImageUrl(room.images[0])
                     : "https://placehold.co/800x500?text=Room"
                 }
                 alt="room"

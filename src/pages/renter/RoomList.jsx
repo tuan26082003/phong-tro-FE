@@ -15,9 +15,10 @@ import {
   Typography,
   Empty,
 } from "antd";
-import { SearchOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import { SearchOutlined, EnvironmentOutlined, HomeOutlined, TeamOutlined } from "@ant-design/icons";
 import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
+import { getImageUrl } from "../../utils/imageHelper";
 
 const API = "/api/rooms";
 const { Option } = Select;
@@ -27,6 +28,23 @@ export default function RoomList() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Add pulse animation CSS
+  const styleTag = document.createElement('style');
+  styleTag.innerHTML = `
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 2px 8px rgba(82, 196, 26, 0.3);
+      }
+      50% {
+        box-shadow: 0 4px 16px rgba(82, 196, 26, 0.6);
+      }
+    }
+  `;
+  if (!document.querySelector('[data-pulse-animation]')) {
+    styleTag.setAttribute('data-pulse-animation', 'true');
+    document.head.appendChild(styleTag);
+  }
+
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -35,10 +53,10 @@ export default function RoomList() {
   const [maxPrice, setMaxPrice] = useState();
   const [minArea, setMinArea] = useState();
   const [sort, setSort] = useState("");
-
+  const [status, setStatus] = useState("AVAILABLE");
   const [pagination, setPagination] = useState({
     page: 0,
-    size: 9,
+    size: 12,
     total: 0,
   });
 
@@ -75,6 +93,7 @@ export default function RoomList() {
     setMaxPrice(maxPriceParam ? Number(maxPriceParam) : undefined);
     setMinArea(minAreaParam ? Number(minAreaParam) : undefined);
     setSort(sortParam);
+    setStatus(params.get("status") || "AVAILABLE");
     setPagination((prev) => ({
       ...prev,
       page: pageParam ? Number(pageParam) - 1 : 0,
@@ -88,6 +107,7 @@ export default function RoomList() {
       const params = {
         page: pagination.page,
         size: pagination.size,
+        status: "AVAILABLE",
       };
 
       if (q) params.q = q;
@@ -146,8 +166,36 @@ export default function RoomList() {
   };
 
   const getStatusTag = (status) => {
-    if (status === "AVAILABLE") return <Tag color="green">Còn trống</Tag>;
-    if (status === "OCCUPIED") return <Tag color="red">Đã thuê</Tag>;
+    if (status === "AVAILABLE") 
+      return (
+        <Tag 
+          color="success" 
+          style={{ 
+            fontWeight: 600,
+            fontSize: 13,
+            padding: '4px 12px',
+            borderRadius: 6,
+            boxShadow: '0 2px 8px rgba(82, 196, 26, 0.3)',
+            animation: 'pulse 2s infinite'
+          }}
+        >
+          ✓ Còn trống
+        </Tag>
+      );
+    if (status === "OCCUPIED") 
+      return (
+        <Tag 
+          color="error"
+          style={{ 
+            fontWeight: 500,
+            fontSize: 13,
+            padding: '4px 12px',
+            borderRadius: 6
+          }}
+        >
+          Đã thuê
+        </Tag>
+      );
     return <Tag>{status}</Tag>;
   };
 
@@ -275,90 +323,133 @@ export default function RoomList() {
       {/* LIST */}
       <Row gutter={[24, 24]}>
         {rooms.map((room) => (
-          <Col xs={24} sm={12} md={8} key={room.id}>
+          <Col xs={24} sm={12} md={6} key={room.id}>
             <Card
               hoverable
               loading={loading}
               style={{
                 borderRadius: 12,
                 overflow: "hidden",
-                height: "100%",
+                height: "auto",
                 display: "flex",
                 flexDirection: "column",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                transition: "all 0.3s"
               }}
+              bodyStyle={{ padding: 12 }}
               onClick={() => navigate(`/rooms/${room.id}`)}
               cover={
                 <img
                   src={
                     room.images && room.images.length > 0
-                      ? room.images[0]
+                      ? getImageUrl(room.images[0])
                       : "https://placehold.co/900x600?text=Room"
                   }
                   alt={room.name}
-                  style={{ height: 200, objectFit: "cover" }}
+                  style={{ height: 140, objectFit: "cover" }}
                 />
               }
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 4,
-                }}
-              >
-                <Text strong style={{ fontSize: 16 }}>
+              {/* Tên phòng */}
+              <div style={{ 
+                marginBottom: 8,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+              }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: "#333" }}>
                   {room.name}
-                </Text>
-                {getStatusTag(room.status)}
+                </span>
               </div>
 
-              <div
-                style={{
-                  color: "#666",
-                  fontSize: 13,
-                  marginBottom: 4,
-                  display: "flex",
-                  alignItems: "center",
+              {/* Địa chỉ, diện tích, số người trên 1 hàng */}
+              <div style={{
+                fontSize: 13,
+                color: "#666",
+                marginBottom: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                overflow: "hidden"
+              }}>
+                <div style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
                   gap: 4,
-                }}
-              >
-                <EnvironmentOutlined />
-                <span>{room.address}</span>
-              </div>
-
-              <div style={{ color: "#555", fontSize: 13, marginBottom: 8 }}>
-                {room.area} m² · {room.capacity} người · Chủ trọ:{" "}
-                <strong>{room.ownerName}</strong>
-              </div>
-
-              {room.utilities && (
-                <div
-                  style={{
-                    color: "#888",
+                  flex: 1,
+                  minWidth: 0,
+                  overflow: "hidden"
+                }}>
+                  <EnvironmentOutlined style={{ fontSize: 14, flexShrink: 0 }} />
+                  <span style={{ 
                     fontSize: 12,
-                    marginBottom: 8,
-                    maxHeight: 40,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
+                  }}>{room.address}</span>
+                </div>
+                <span style={{ color: "#d9d9d9", flexShrink: 0 }}>|</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                  <HomeOutlined style={{ fontSize: 14 }} />
+                  <span>{room.area}m²</span>
+                </div>
+                <span style={{ color: "#d9d9d9", flexShrink: 0 }}>|</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                  <TeamOutlined style={{ fontSize: 14 }} />
+                  <span>{room.capacity} người</span>
+                </div>
+              </div>
+
+              {/* Giá */}
+              <div style={{ paddingTop: 8, borderTop: "1px solid #f0f0f0", marginBottom: 8 }}>
+                <span style={{ fontSize: 18, fontWeight: 700, color: "#d4380d" }}>
+                  {room.price.toLocaleString("vi-VN")}₫
+                </span>
+                <span style={{ fontSize: 13, color: "#999", marginLeft: 4 }}>
+                  /tháng
+                </span>
+              </div>
+
+              {/* Nút xem chi tiết và nhắn tin */}
+              <div style={{ display: "flex", gap: 8 }}>
+                <Button 
+                  type="primary" 
+                  style={{
+                    flex: 1,
+                    background: "#1890ff",
+                    borderColor: "#1890ff",
+                    borderRadius: 6,
+                    fontWeight: 500,
+                    height: 32,
+                    fontSize: 13
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/rooms/${room.id}`);
                   }}
                 >
-                  <Text type="secondary">Tiện ích: {room.utilities}</Text>
-                </div>
-              )}
-
-              <div
-                style={{
-                  marginTop: "auto",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 12,
-                }}
-              >
-                <Text strong style={{ fontSize: 16, color: "#d4380d" }}>
-                  {room.price.toLocaleString("vi-VN")}₫/tháng
-                </Text>
+                  Xem chi tiết
+                </Button>
+                <Button 
+                  style={{
+                    flex: 1,
+                    borderRadius: 6,
+                    fontWeight: 500,
+                    height: 32,
+                    fontSize: 13
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!room.ownerId) {
+                      toast.warning("Không tìm thấy thông tin chủ trọ");
+                      return;
+                    }
+                    localStorage.setItem("chatWithUserId", room.ownerId);
+                    navigate(`/chat`);
+                  }}
+                >
+                  Nhắn tin
+                </Button>
               </div>
             </Card>
           </Col>

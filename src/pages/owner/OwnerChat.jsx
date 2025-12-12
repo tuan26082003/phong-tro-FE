@@ -7,8 +7,10 @@ import {
   message,
   Spin,
   Empty,
-  Select,
 } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
 
 import axiosClient from "../../api/axiosClient";
 
@@ -26,12 +28,33 @@ export default function OwnerChat() {
   const [loadingMsg, setLoadingMsg] = useState(false);
 
   const [inputMsg, setInputMsg] = useState("");
-  const [allUsers, setAllUsers] = useState([]);
+  const [searchUser, setSearchUser] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
 
   const bottomRef = useRef(null);
+  const stompClientRef = useRef(null);
+  const currentConvRef = useRef(null);
 
-  // CHỦ TRỌ ID (login)
-  const currentUserId = 1;
+  // Lấy user ID từ localStorage
+  const getCurrentUserId = () => {
+    try {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const userData = JSON.parse(userStr);
+        return userData.user?.id || null;
+      }
+    } catch (e) {
+      console.error("Parse user error:", e);
+    }
+    return null;
+  };
+
+  const currentUserId = getCurrentUserId();
+
+  useEffect(() => {
+    currentConvRef.current = currentConv;
+  }, [currentConv]);
 
   // =====================================================
   // LOG ERROR
@@ -56,14 +79,77 @@ export default function OwnerChat() {
   };
 
   // =====================================================
-  // LOAD USERS
+  // WEBSOCKET SETUP (chỉ phụ thuộc currentUserId)
   // =====================================================
-  const loadUsers = async () => {
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const socket = new SockJS("http://localhost:8080/ws");
+    const client = new Client({
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+      onConnect: () => {
+        console.log("WebSocket Connected as userId:", currentUserId);
+
+        // subscribe topic riêng cho user hiện tại
+        // BE gửi vào /topic/user.{receiverId}
+        client.subscribe(`/topic/user.${currentUserId}`, (messageFrame) => {
+          const newMessage = JSON.parse(messageFrame.body);
+          console.log("Received message:", newMessage);
+
+          const conv = currentConvRef.current;
+
+          // Nếu đang mở một cuộc trò chuyện, thì reload tin nhắn từ server
+          if (conv) {
+            // gọi lại API để đảm bảo đồng bộ với DB
+            loadMessages(conv.id, 0);
+          }
+
+          // Reload list hội thoại để update lastMessage
+          loadConversations();
+        });
+      },
+      onStompError: (frame) => {
+        console.error("STOMP error:", frame);
+      },
+    });
+
+    client.activate();
+    stompClientRef.current = client;
+
+    return () => {
+      if (client) {
+        client.deactivate();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUserId]);
+
+  // =====================================================
+  // SEARCH USERS
+  // =====================================================
+  const handleSearchUser = async () => {
+    if (!searchUser.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
     try {
-      const res = await axiosClient.get("/api/user?page=0&size=9999");
-      setAllUsers(res.data.data || []);
+      setSearching(true);
+      const res = await axiosClient.get("/api/user", {
+        params: {
+          page: 0,
+          size: 12,
+          search: searchUser.trim(),
+        },
+      });
+      setSearchResults(res.data.data || []);
     } catch (err) {
-      logErr(err, "Không tải được danh sách người dùng");
+      logErr(err, "Không tìm được người dùng");
+    } finally {
+      setSearching(false);
     }
   };
 
@@ -71,12 +157,14 @@ export default function OwnerChat() {
   // LOAD CONVERSATIONS
   // =====================================================
   const loadConversations = async () => {
+    if (!currentUserId) {
+      message.warning("Vui lòng đăng nhập để sử dụng chat");
+      return;
+    }
+
     try {
       setLoadingConv(true);
-      const res = await axiosClient.get(
-        `/api/chat/conversations?userId=${currentUserId}`
-      );
-
+      const res = await axiosClient.get("/api/chat/conversations");
       setConversations(res.data.data || []);
     } catch (err) {
       logErr(err, "Không tải hội thoại");
@@ -86,22 +174,40 @@ export default function OwnerChat() {
   };
 
   useEffect(() => {
-    loadUsers();
-    loadConversations();
-  }, []);
+    if (currentUserId) {
+      loadConversations();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUserId]);
 
   // =====================================================
   // CREATE CONVERSATION
   // =====================================================
   const createConversation = async (receiverId) => {
+    if (!currentUserId) {
+      message.warning("Vui lòng đăng nhập để chat");
+      return;
+    }
+
+    if (receiverId === currentUserId) {
+      message.warning("Không thể chat với chính mình");
+      return;
+    }
+
     try {
-      await axiosClient.post("/api/chat/conversation", {
+      const res = await axiosClient.post("/api/chat/conversation", {
         user1Id: currentUserId,
         user2Id: receiverId,
       });
 
       message.success("Bắt đầu cuộc trò chuyện");
-      loadConversations();
+
+      await loadConversations();
+
+      if (res.data && res.data.data) {
+        const newConv = res.data.data;
+        openConversation(newConv);
+      }
     } catch (err) {
       logErr(err, "Không thể tạo cuộc trò chuyện");
     }
@@ -148,6 +254,7 @@ export default function OwnerChat() {
   // =====================================================
   const openConversation = (conv) => {
     setCurrentConv(conv);
+    currentConvRef.current = conv;
     setMessagesList([]);
     setMsgPage(0);
     loadMessages(conv.id, 0);
@@ -169,29 +276,60 @@ export default function OwnerChat() {
   };
 
   // =====================================================
-  // SEND MESSAGE
+  // SEND MESSAGE VIA WEBSOCKET
   // =====================================================
   const sendMessage = async () => {
-    if (!inputMsg.trim() || !currentConv) return;
+    if (!inputMsg.trim() || !currentConv || !currentUserId) return;
+    if (!stompClientRef.current || !stompClientRef.current.connected) {
+      message.error("WebSocket chưa kết nối");
+      return;
+    }
+
+    const receiverId =
+      currentConv.user1Id === currentUserId
+        ? currentConv.user2Id
+        : currentConv.user1Id;
+
+    const messageContent = inputMsg.trim();
+    setInputMsg("");
+
+    const tempMessage = {
+      id: Date.now(),
+      conversationId: currentConv.id,
+      senderId: currentUserId,
+      receiverId: receiverId,
+      content: messageContent,
+      createdAt: new Date().toISOString(),
+      seen: false,
+    };
+
+    // optimistic update (cho mình thấy luôn)
+    setMessagesList((prev) => [...prev, tempMessage]);
+
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
 
     try {
-      await axiosClient.post("/api/chat/send", {
+      const payload = {
+        conversationId: currentConv.id,
         senderId: currentUserId,
-        receiverId:
-          currentConv.user1Id === currentUserId
-            ? currentConv.user2Id
-            : currentConv.user1Id,
-        content: inputMsg,
-      });
+        receiverId: receiverId,
+        content: messageContent,
+      };
 
-      setInputMsg("");
-      loadMessages(currentConv.id, 0);
+      stompClientRef.current.publish({
+        destination: "/app/chat.send",
+        body: JSON.stringify(payload),
+      });
     } catch (err) {
       logErr(err, "Không thể gửi tin nhắn");
+      setMessagesList((prev) => prev.filter((m) => m.id !== tempMessage.id));
     }
   };
 
   const loadMore = () => {
+    if (!currentConv) return;
     if ((msgPage + 1) * 20 >= msgTotal) return;
     loadMessages(currentConv.id, msgPage + 1);
   };
@@ -209,60 +347,123 @@ export default function OwnerChat() {
       }}
     >
       {/* LEFT SIDEBAR */}
-      <div style={{ borderRight: "1px solid #ddd", overflowY: "auto" }}>
-        <h3 style={{ padding: 15, borderBottom: "1px solid #eee" }}>
+      <div
+        style={{
+          borderRight: "1px solid #ddd",
+          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <h3
+          style={{
+            padding: 15,
+            borderBottom: "1px solid #eee",
+            margin: 0,
+          }}
+        >
           Hội thoại
         </h3>
 
-        {/* SELECT USER TO START CHAT */}
-        <div style={{ padding: 10, borderBottom: "1px solid #eee" }}>
-          <Select
-            style={{ width: "100%" }}
-            placeholder="Chọn người dùng để chat"
-            onChange={(id) => createConversation(id)}
-          >
-            {allUsers.map((u) => (
-              <Select.Option key={u.id} value={u.id}>
-                {u.fullName} – {u.email}
-              </Select.Option>
-            ))}
-          </Select>
-        </div>
+        {/* SEARCH USER TO START CHAT */}
+        <div
+          style={{
+            padding: 10,
+            borderBottom: "1px solid #eee",
+          }}
+        >
+          <Input.Search
+            placeholder="Tìm người dùng để chat..."
+            value={searchUser}
+            onChange={(e) => setSearchUser(e.target.value)}
+            onSearch={handleSearchUser}
+            loading={searching}
+            prefix={<SearchOutlined />}
+            enterButton="Tìm"
+          />
 
-        {loadingConv ? (
-          <Spin />
-        ) : conversations.length === 0 ? (
-          <Empty description="Không có hội thoại" style={{ marginTop: 40 }} />
-        ) : (
-          <List
-            itemLayout="horizontal"
-            dataSource={conversations}
-            renderItem={(item) => {
-              const partner =
-                item.user1Id === currentUserId
-                  ? item.user2Name
-                  : item.user1Name;
-
-              return (
+          {searchResults.length > 0 && (
+            <List
+              size="small"
+              style={{
+                marginTop: 8,
+                maxHeight: 200,
+                overflowY: "auto",
+                border: "1px solid #f0f0f0",
+                borderRadius: 4,
+              }}
+              dataSource={searchResults}
+              renderItem={(user) => (
                 <List.Item
-                  onClick={() => openConversation(item)}
                   style={{
                     cursor: "pointer",
-                    padding: "12px 15px",
-                    borderBottom: "1px solid #f0f0f0",
-                    background:
-                      currentConv?.id === item.id ? "#f5f5f5" : "white",
+                    padding: "8px 12px",
+                    fontSize: 13,
+                  }}
+                  onClick={() => {
+                    createConversation(user.id);
+                    setSearchResults([]);
+                    setSearchUser("");
                   }}
                 >
                   <List.Item.Meta
-                    avatar={<Avatar>{partner[0]}</Avatar>}
-                    title={<b>{partner}</b>}
+                    avatar={
+                      <Avatar size="small">
+                        {user.fullName ? user.fullName[0] : "U"}
+                      </Avatar>
+                    }
+                    title={
+                      <span style={{ fontSize: 13 }}>{user.fullName}</span>
+                    }
+                    description={
+                      <span style={{ fontSize: 12 }}>{user.email}</span>
+                    }
                   />
                 </List.Item>
-              );
-            }}
-          />
-        )}
+              )}
+            />
+          )}
+        </div>
+
+        {/* CONVERSATIONS LIST */}
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          {loadingConv ? (
+            <div style={{ textAlign: "center", padding: 20 }}>
+              <Spin />
+            </div>
+          ) : conversations.length === 0 ? (
+            <Empty description="Chưa có hội thoại" style={{ marginTop: 40 }} />
+          ) : (
+            <List
+              itemLayout="horizontal"
+              dataSource={conversations}
+              renderItem={(item) => {
+                const partner =
+                  item.user1Id === currentUserId
+                    ? item.user2Name
+                    : item.user1Name;
+
+                return (
+                  <List.Item
+                    onClick={() => openConversation(item)}
+                    style={{
+                      cursor: "pointer",
+                      padding: "12px 15px",
+                      borderBottom: "1px solid #f0f0f0",
+                      background:
+                        currentConv?.id === item.id ? "#f5f5f5" : "white",
+                    }}
+                  >
+                    <List.Item.Meta
+                      avatar={<Avatar>{partner ? partner[0] : "U"}</Avatar>}
+                      title={<b>{partner}</b>}
+                    />
+                  </List.Item>
+                );
+              }}
+            />
+          )}
+        </div>
       </div>
 
       {/* RIGHT CHAT PANEL */}
@@ -271,6 +472,7 @@ export default function OwnerChat() {
           display: "flex",
           flexDirection: "column",
           height: "100%",
+          overflow: "hidden",
         }}
       >
         {/* HEADER */}
@@ -279,6 +481,7 @@ export default function OwnerChat() {
             padding: 15,
             borderBottom: "1px solid #ddd",
             fontWeight: "bold",
+            flexShrink: 0,
           }}
         >
           {currentConv ? (
@@ -301,12 +504,19 @@ export default function OwnerChat() {
             background: "#fafafa",
             display: "flex",
             flexDirection: "column",
+            minHeight: 0,
           }}
         >
           {currentConv && msgTotal > messagesList.length && (
             <Button size="small" onClick={loadMore}>
               Tải thêm
             </Button>
+          )}
+
+          {loadingMsg && messagesList.length === 0 && (
+            <div style={{ textAlign: "center", padding: 20 }}>
+              <Spin />
+            </div>
           )}
 
           {messagesList.map((m) => {
@@ -355,6 +565,8 @@ export default function OwnerChat() {
               borderTop: "1px solid #ddd",
               display: "flex",
               gap: 10,
+              flexShrink: 0,
+              background: "white",
             }}
           >
             <Input

@@ -2,7 +2,16 @@
 import { useState, useEffect } from "react";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { Button, Avatar, Dropdown, Space, Typography } from "antd";
-import { MenuOutlined, CloseOutlined, UserOutlined } from "@ant-design/icons";
+import { 
+  MenuOutlined, 
+  CloseOutlined, 
+  UserOutlined,
+  HeartOutlined,
+  SearchOutlined,
+  BellOutlined,
+  HomeOutlined,
+  MessageOutlined
+} from "@ant-design/icons";
 import "./layout.css";
 
 const { Text } = Typography;
@@ -69,17 +78,17 @@ export default function RenterLayout() {
     {
       key: "booking-list",
       label: "Quản lý Đặt phòng",
-      onClick: () => navigate("/booking-list"),
+      onClick: () => navigate("/booking-list", { replace: true }),
     },
     {
       key: "contract",
       label: "Quản lý Hợp đồng",
-      onClick: () => navigate("/contract"),
+      onClick: () => navigate("/contract", { replace: true }),
     },
     {
       key: "change-password",
       label: "Đổi mật khẩu",
-      onClick: () => navigate("/change-password"),
+      onClick: () => navigate("/change-password", { replace: true }),
     },
 
     { type: "divider" },
@@ -96,64 +105,98 @@ export default function RenterLayout() {
       {/* HEADER */}
       <header className="header">
         <div className="header-left">
-          <div className="logo">StayEase</div>
+          <Link to="/" className="logo">
+            <HomeOutlined className="logo-icon" style={{ color: '#2196F3' }} />
+            <span className="logo-text" style={{ color: '#2196F3' }}>PHÒNG TRỌ</span>
+          </Link>
         </div>
 
         {/* DESKTOP NAV */}
         <nav className="nav nav-desktop">
           <Link to="/">Trang chủ</Link>
-          <Link to="/rooms">Tìm phòng</Link>
-          <Link to="/help">Hỗ trợ</Link>
-          <Link to="/contact">Liên Hệ</Link>
+          <Link to="/rooms">Phòng trọ</Link>
+          <Link to="/about">Giới thiệu</Link>
+          <Link to="/contact">Hỗ trợ</Link>
         </nav>
 
         {/* DESKTOP AUTH */}
         <div className="auth auth-desktop">
-          {currentUser ? (
-            <Space align="center" size="middle">
+          <Space size="large">
+            <MessageOutlined 
+              className="header-icon" 
+              onClick={() => navigate("/chat")}
+              style={{ cursor: "pointer" }}
+            />
+            {currentUser ? (
               <Dropdown
                 menu={{ items: userMenuItems }}
                 placement="bottomRight"
                 trigger={["click"]}
               >
-                <Space
-                  style={{
+                <Avatar
+                  size={40}
+                  style={{ 
+                    backgroundColor: "#2196F3", 
                     cursor: "pointer",
-                    padding: "4px 10px",
-                    borderRadius: 999,
-                    border: "1px solid #e5e5e5",
-                    background: "#fafafa",
+                    fontSize: 16,
+                    fontWeight: 600
+                  }}
+                  icon={!currentUser.fullName && <UserOutlined />}
+                >
+                  {currentUser.fullName && getInitials(currentUser.fullName)}
+                </Avatar>
+              </Dropdown>
+            ) : (
+              <Space size="middle">
+                <Button 
+                  size="large"
+                  onClick={() => navigate("/login")}
+                  className="btn-login"
+                  style={{ 
+                    borderRadius: 8,
+                    padding: "0 24px",
+                    backgroundColor: "#fff",
+                    borderColor: "#2196F3",
+                    color: "#666",
+                    fontWeight: 600
                   }}
                 >
-                  <Avatar
-                    size="small"
-                    style={{ backgroundColor: "#1677ff" }}
-                    icon={!currentUser.fullName && <UserOutlined />}
-                  >
-                    {currentUser.fullName && getInitials(currentUser.fullName)}
-                  </Avatar>
-                  <div style={{ lineHeight: 1.2 }}>
-                    <Text strong style={{ fontSize: 13 }}>
-                      {currentUser.fullName}
-                    </Text>
-                    <br />
-                    <Text type="secondary" style={{ fontSize: 11 }}>
-                      {currentUser.roleName || "Người thuê trọ"}
-                    </Text>
-                  </div>
-                </Space>
-              </Dropdown>
-            </Space>
-          ) : (
-            <>
-              <Button type="default">
-                <Link to="/login">Đăng nhập</Link>
-              </Button>
-              <Button type="primary">
-                <Link to="/register">Đăng ký</Link>
-              </Button>
-            </>
-          )}
+                  Đăng nhập
+                </Button>
+                 <Button 
+                  type="primary"
+                  size="large"
+                  onClick={() => navigate("/register")}
+                  className="btn-register"
+                  style={{ 
+                    borderRadius: 8,
+                    padding: "0 24px",
+                    backgroundColor: "#2196F3",
+                    borderColor: "#2196F3",
+                    color: "#fff",
+                    fontWeight: 600
+                  }}
+                >
+                  Đăng ký
+                </Button>
+                <Button 
+                  size="large"
+                  onClick={() => navigate("/post-room")}
+                  style={{ 
+                    borderRadius: 8,
+                    padding: "0 24px",
+                    backgroundColor: "#fff",
+                    borderColor: "#2196F3",
+                    color: "#666",
+                    fontWeight: 600
+                  }}
+                >
+                  Đăng tin
+                </Button>
+               
+              </Space>
+            )}
+          </Space>
         </div>
 
         {/* MOBILE BURGER */}
@@ -165,7 +208,10 @@ export default function RenterLayout() {
       {/* MOBILE MENU OVERLAY */}
       <div className={`mobile-menu ${menuOpen ? "show" : ""}`}>
         <div className="mobile-menu-header">
-          <span className="mobile-logo">StayEase</span>
+          <span className="mobile-logo">
+            <HomeOutlined style={{ marginRight: 8 }} />
+            PHÒNG TRỌ
+          </span>
           <CloseOutlined
             className="close-btn"
             onClick={() => setMenuOpen(false)}
@@ -201,12 +247,12 @@ export default function RenterLayout() {
             Trang chủ
           </Link>
           <Link to="/rooms" onClick={() => setMenuOpen(false)}>
-            Tìm phòng
+            Phòng trọ
           </Link>
           <Link to="/about" onClick={() => setMenuOpen(false)}>
             Giới thiệu
           </Link>
-          <Link to="/contact" onClick={() => setMenuOpen(false)}>
+          <Link to="/help" onClick={() => setMenuOpen(false)}>
             Hỗ trợ
           </Link>
         </nav>
@@ -259,7 +305,10 @@ export default function RenterLayout() {
       <footer className="footer">
         <div className="footer-container">
           <div className="footer-col">
-            <h3 className="footer-logo">StayEase</h3>
+            <h3 className="footer-logo">
+              <HomeOutlined style={{ marginRight: 8 }} />
+              PHÒNG TRỌ
+            </h3>
             <p className="footer-desc">
               Nền tảng tìm phòng trọ thông minh – minh bạch – an toàn – kết nối
               nhanh giữa chủ trọ và người thuê.
@@ -320,7 +369,7 @@ export default function RenterLayout() {
           <p>Giấy phép TMĐT số 01A-2025 / Bộ Công Thương</p>
           <hr />
           <p>
-            © 2025 StayEase – Nền tảng tìm phòng trọ thông minh tại Việt Nam.
+            © 2025 PHÒNG TRỌ – Nền tảng tìm phòng trọ thông minh tại Việt Nam.
           </p>
         </div>
       </footer>

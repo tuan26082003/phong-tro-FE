@@ -19,7 +19,7 @@ export default function OwnerContract() {
 
   const [pagination, setPagination] = useState({
     page: 0,
-    size: 10,
+    size: 12,
     total: 0,
   });
 
@@ -118,21 +118,37 @@ export default function OwnerContract() {
   };
 
   const downloadContract = async (id) => {
-    try {
-      const res = await axiosClient.get(`${API}/${id}/download`, {
-        responseType: "blob",
-      });
+  try {
+    const res = await axiosClient.get(`${API}/${id}/download`, {
+      responseType: "blob", // RẤT QUAN TRỌNG
+    });
 
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `contract_${id}.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      logErr(err);
+    // Kiểm tra Content-Type backend trả về
+    const contentType = res.headers["content-type"] || "";
+    if (!contentType.includes("application/pdf")) {
+      // Backend không trả PDF, log ra để xem đang trả gì
+      const text = await res.data.text?.().catch(() => null);
+      console.error("Server không trả PDF, content-type:", contentType, "body:", text);
+      toast.error("Server không trả đúng file PDF");
+      return;
     }
-  };
+
+    const blob = new Blob([res.data], { type: "application/pdf" });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = `contract_${id}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+
+    toast.success("Đã tải hợp đồng");
+  } catch (err) {
+    console.error("Download error details:", err);
+    toast.error("Không tải được file hợp đồng");
+  }
+};
 
   const columns = [
     {
@@ -230,9 +246,9 @@ export default function OwnerContract() {
 
           <Form.Item name="status" label="Trạng thái">
             <Select>
-              <Select.Option value="ACTIVE">ACTIVE</Select.Option>
-              <Select.Option value="ENDED">ENDED</Select.Option>
-              <Select.Option value="CANCELLED">CANCELLED</Select.Option>
+              <Select.Option value="ACTIVE">Hoạt động</Select.Option>
+              <Select.Option value="EXPIRED">Kết thúc</Select.Option>
+              <Select.Option value="TERMINATED">Gia hạn</Select.Option>
             </Select>
           </Form.Item>
         </Form>

@@ -24,13 +24,8 @@ export default function OwnerUser() {
 
   const [pagination, setPagination] = useState({
     page: 0,
-    size: 10,
+    size: 12,
     total: 0,
-  });
-
-  const [query, setQuery] = useState({
-    q: "",
-    sort: "asc",
   });
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -71,13 +66,12 @@ export default function OwnerUser() {
       setLoading(true);
 
       const params = {
-        q: query.q,
         page: pagination.page,
         size: pagination.size,
-        sort: query.sort,
       };
 
-      const res = await axiosClient.get(API, { params });
+      // Gọi API mới: /api/user/role/OWNER
+      const res = await axiosClient.get(`${API}/role/OWNER`, { params });
 
       setUsers(res.data.data || []);
 
@@ -87,7 +81,7 @@ export default function OwnerUser() {
         totalPages: res.data.totalPages,
       });
     } catch (err) {
-      logAxiosError(err, "Không tải được danh sách người dùng");
+      logAxiosError(err, "Không tải được danh sách chủ trọ");
     } finally {
       setLoading(false);
     }
@@ -95,7 +89,7 @@ export default function OwnerUser() {
 
   useEffect(() => {
     loadUsers();
-  }, [pagination.page, query]);
+  }, [pagination.page]);
 
   const openCreate = () => {
     setEditData(null);
@@ -156,33 +150,7 @@ export default function OwnerUser() {
     }
   };
 
-  // ======================================================
-  // ONLY RENTER → OWNER
-  // ======================================================
-  const promoteToOwner = async (userId) => {
-    try {
-      const roleReq = await axiosClient.put(`${API}/${userId}/role`, {
-        roleName: "OWNER",
-      });
 
-      if (roleReq.data.status >= 400) {
-        toast.error(roleReq.data.message);
-        return;
-      }
-
-      toast.success("Đã nâng cấp thành Owner");
-
-      // ÉP FE cập nhật ngay lập tức
-      setUsers((prev) => {
-        const newList = prev.map((u) =>
-          u.id === userId ? { ...u, roleName: "OWNER" } : u
-        );
-        return [...newList]; // ÉP tạo new reference -> React bắt buộc re-render
-      });
-    } catch (err) {
-      logAxiosError(err, "Không thể nâng cấp");
-    }
-  };
 
   const columns = [
     {
@@ -214,17 +182,6 @@ export default function OwnerUser() {
       title: "Hành động",
       render: (record) => (
         <Space>
-          {/* ONLY show this button if user is RENTER */}
-          {record.roleName === "RENTER" && (
-            <Button
-              type="text"
-              style={{ color: "orange", fontWeight: "bold" }}
-              onClick={() => promoteToOwner(record.id)}
-            >
-              Nâng lên Owner
-            </Button>
-          )}
-
           <Button
             type="text"
             icon={<EditOutlined style={{ color: "#1677ff" }} />}
@@ -244,27 +201,6 @@ export default function OwnerUser() {
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          marginBottom: 16,
-        }}
-      >
-        <Input
-          placeholder="Tìm kiếm..."
-          value={query.q}
-          onChange={(e) => setQuery({ ...query, q: e.target.value })}
-          style={{ width: 250 }}
-        />
-
-        <div style={{ flex: 1 }} />
-
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          Thêm người dùng
-        </Button>
-      </div>
-
       <Table
         columns={columns}
         dataSource={users}
@@ -276,6 +212,7 @@ export default function OwnerUser() {
           pageSize: pagination.size,
           total: pagination.total,
           onChange: (p) => setPagination({ ...pagination, page: p - 1 }),
+          style: { textAlign: "center", marginTop: 16 },
         }}
       />
 
@@ -284,7 +221,7 @@ export default function OwnerUser() {
         onCancel={() => setModalOpen(false)}
         onOk={submitForm}
         width={700}
-        title={editData ? "Cập nhật người dùng" : "Thêm người dùng"}
+        title={editData ? "Cập nhật chủ trọ" : "Thêm chủ trọ"}
       >
         <Form layout="vertical" form={form}>
           <div
@@ -342,9 +279,9 @@ export default function OwnerUser() {
         onOk={handleDelete}
         okText="Xoá"
         okType="danger"
-        title="Xoá người dùng"
+        title="Xoá chủ trọ"
       >
-        <p>Bạn chắc chắn muốn xoá người dùng:</p>
+        <p>Bạn chắc chắn muốn xoá chủ trọ:</p>
         <p style={{ fontWeight: "bold" }}>{deleteData?.fullName}</p>
       </Modal>
     </div>

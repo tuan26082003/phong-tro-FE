@@ -380,7 +380,7 @@ const pieConfig = {
               columns={revenueColumns}
               dataSource={roomRevenue}
               rowKey="roomId"
-              pagination={false}
+              pagination={{ pageSize: 10, showSizeChanger: false }}
               summary={(data) => {
                 const total = data.reduce((sum, item) => sum + item.revenue, 0);
                 return (

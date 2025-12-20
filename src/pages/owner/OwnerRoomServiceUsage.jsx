@@ -134,9 +134,32 @@ export default function OwnerRoomServiceUsage() {
   const submitForm = async () => {
     const values = await form.validateFields();
 
+    // normalize month and compute derived fields
+    const vals = { ...values };
+    vals.month = values.month ? values.month.format("YYYY-MM") : null;
+
+    // compute quantityUsed for METERED if not provided
+    let quantityUsed = vals.quantityUsed ?? null;
+    if ((vals.type || '').toUpperCase() === 'METERED') {
+      const oldV = vals.quantityOld ?? null;
+      const newV = vals.quantityNew ?? null;
+      if (oldV != null && newV != null) {
+        quantityUsed = Number(newV) - Number(oldV);
+      } else if (quantityUsed == null) {
+        quantityUsed = 0;
+      }
+    } else {
+      quantityUsed = vals.quantityUsed ?? 1;
+    }
+
+    // determine pricePerUnit from selected service if not provided
+    const svc = services.find(s => String(s.id) === String(vals.roomServiceId));
+    const pricePerUnit = vals.pricePerUnit != null ? vals.pricePerUnit : (svc?.pricePerUnit ?? svc?.price ?? 0);
+
     const payload = {
-      ...values,
-      month: values.month ? values.month.format("YYYY-MM") : null,
+      ...vals,
+      quantityUsed,
+      pricePerUnit,
     };
 
     try {
@@ -182,9 +205,13 @@ export default function OwnerRoomServiceUsage() {
       dataIndex: "name",
     },
     {
-      title: "Loại",
-      dataIndex: "type",
-      render: (t) => <Tag color={t === "METERED" ? "blue" : "green"}>{t}</Tag>,
+        title: "Loại",
+        dataIndex: "type",
+        render: (t) => (
+          <Tag color={t === "METERED" ? "blue" : "green"}>
+            {(t || '').toUpperCase() === 'METERED' ? 'Theo công tơ' : 'Cố định'}
+          </Tag>
+        ),
     },
     {
       title: "Phòng",
@@ -208,21 +235,25 @@ export default function OwnerRoomServiceUsage() {
     },
     {
       title: "Đã dùng",
-      dataIndex: "quantityUsed",
+      key: "quantityUsed",
+      render: (v, r) => {
+        if (v != null) return v;
+        if (r?.quantityUsed != null) return Number(r.quantityUsed);
+        return 0;
+      }
     },
-    {
-      title: "Đơn giá",
-      dataIndex: "pricePerUnit",
-      render: (v) => v.toLocaleString("vi-VN") + "₫",
-    },
+    
     {
       title: "Tiền",
       dataIndex: "totalPrice",
-      render: (v) => v.toLocaleString("vi-VN") + "₫",
+      render: (v) => {
+        const n = v != null ? Number(v) : null;
+        return n == null ? "—" : `${n.toLocaleString("vi-VN")}₫`;
+      },
     },
     {
       title: "Hành động",
-      render: (record) => (
+      render: (_, record) => (
         <Space>
           <Button
             type="text"
@@ -316,8 +347,8 @@ export default function OwnerRoomServiceUsage() {
 
             <Form.Item name="type" label="Loại" rules={[{ required: true }]}>
               <Select>
-                <Select.Option value="METERED">METERED</Select.Option>
-                <Select.Option value="FIXED">FIXED</Select.Option>
+                <Select.Option value="METERED">Theo công tơ</Select.Option>
+                <Select.Option value="FIXED">Cố định</Select.Option>
               </Select>
             </Form.Item>
 
@@ -329,9 +360,7 @@ export default function OwnerRoomServiceUsage() {
               <InputNumber style={{ width: "100%" }} min={0} />
             </Form.Item>
 
-            <Form.Item name="pricePerUnit" label="Đơn giá">
-              <InputNumber style={{ width: "100%" }} min={0} />
-            </Form.Item>
+            {/* Giá sẽ lấy từ cấu hình dịch vụ, không cần nhập tay */}
 
             <Form.Item name="month" label="Tháng">
               <DatePicker picker="month" style={{ width: "100%" }} />

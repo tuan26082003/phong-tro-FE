@@ -186,7 +186,7 @@ export default function RegisterRenter() {
             Tạo tài khoản mới
           </Typography.Title>
           <Typography.Paragraph style={styles.subtitle}>
-            Đăng ký để bắt đầu tìm phòng trọ phù hợp
+            Đăng ký để bắt đầu tìm Phòng Trọ phù hợp
           </Typography.Paragraph>
 
           <Form layout="vertical" onFinish={onFinish}>
@@ -319,7 +319,7 @@ export default function RegisterRenter() {
       <div style={styles.imageSection}>
         <img
           src={require("../../assets/tro2.jpg")}
-          alt="Phòng trọ"
+          alt="Phòng Trọ"
           style={styles.image}
         />
         <div style={styles.imageOverlay}></div>

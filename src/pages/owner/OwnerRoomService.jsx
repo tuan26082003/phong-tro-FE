@@ -9,7 +9,6 @@ import {
   InputNumber,
   message,
   Select,
-  Tag,
 } from "antd";
 
 import {
@@ -37,6 +36,18 @@ export default function OwnerRoomServices() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
   const [form] = Form.useForm();
+  const [selectedServiceId, setSelectedServiceId] = useState(null);
+  const selectedService = services.find((s) => s.id === selectedServiceId) || null;
+  const [pricePerUnit, setPricePerUnit] = useState(null);
+  const [newServiceName, setNewServiceName] = useState("");
+  const [serviceType, setServiceType] = useState("FIXED");
+
+  const typeLabel = (t) => {
+    if (!t) return "---";
+    if (String(t).toUpperCase() === "FIXED") return "Cố định";
+    if (String(t).toUpperCase() === "METERED") return "Tính theo công tơ";
+    return t;
+  };
 
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
   const [deleteData, setDeleteData] = useState(null);
@@ -114,9 +125,16 @@ export default function OwnerRoomServices() {
     setModalDeleteOpen(true);
   };
 
-  const openAssignModal = () => {
-    setAssignRoomId(null);
-    setAssignList([]);
+  const openAssignModal = (room) => {
+    if (room) {
+      const id = room.id || room;
+      setAssignRoomId(id);
+      loadAssignList(id);
+    } else {
+      setAssignRoomId(null);
+      setAssignList([]);
+    }
+
     setModalAssignOpen(true);
   };
 
@@ -166,6 +184,52 @@ export default function OwnerRoomServices() {
     }
   };
 
+  const assignServiceById = async () => {
+    // require room
+    if (!assignRoomId) {
+      message.error("Vui lòng chọn phòng trước");
+      return;
+    }
+
+    // require price
+    if (!pricePerUnit && pricePerUnit !== 0) {
+      message.error("Vui lòng nhập giá dịch vụ");
+      return;
+    }
+
+    try {
+      const payload = { roomId: assignRoomId, pricePerUnit, type: serviceType };
+
+      if (selectedServiceId === "new") {
+        if (!newServiceName || !newServiceName.trim()) {
+          message.error("Vui lòng nhập tên dịch vụ mới");
+          return;
+        }
+
+        payload.serviceName = newServiceName.trim();
+      } else {
+        if (!selectedServiceId) {
+          message.error("Vui lòng chọn dịch vụ");
+          return;
+        }
+
+        payload.serviceId = selectedServiceId;
+      }
+
+      const res = await axiosClient.post(`/api/room-services/assign`, payload);
+
+      message.success(res.data?.message || "Đã gán dịch vụ");
+      setSelectedServiceId(null);
+      setNewServiceName("");
+      setPricePerUnit(null);
+      setServiceType("FIXED");
+      loadAssignList(assignRoomId);
+    } catch (err) {
+      console.error("Assign by id error:", err);
+      message.error(err.response?.data?.message || "Không thể gán dịch vụ");
+    }
+  };
+
   const unassignService = async (assignId) => {
     try {
       console.log("Deleting assign ID:", assignId);
@@ -189,31 +253,8 @@ export default function OwnerRoomServices() {
       title: "Mô tả",
       dataIndex: "description",
     },
-    {
-      title: "Hành động",
-      render: (record) => (
-        <Space>
-          <Button
-            type="text"
-            icon={<EditOutlined style={{ color: "#1677ff" }} />}
-            onClick={() => openEdit(record)}
-          />
-
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => openDelete(record)}
-          />
-
-          <Button
-            type="text"
-            icon={<LinkOutlined style={{ color: "orange" }} />}
-            onClick={() => openAssignModal(record)}
-          />
-        </Space>
-      ),
-    },
+  
+    
   ];
 
   return (
@@ -224,6 +265,46 @@ export default function OwnerRoomServices() {
         </Button>
       </div>
 
+      {/* ROOMS LIST - quick manage per room */}
+      <div style={{ marginBottom: 20 }}>
+        <h3>Quản lý dịch vụ theo phòng</h3>
+        <br></br>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+            gap: 12,
+            alignItems: "start",
+          }}
+        >
+          {allRooms.map((r) => (
+            <div
+              key={r.id}
+              style={{
+                border: "1px solid #eee",
+                padding: 10,
+                borderRadius: 6,
+                minWidth: 200,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                minHeight: 88,
+                background: "#fff",
+              }}
+            >
+              <div style={{ fontWeight: 600 }}>{r.name || `Phòng #${r.id}`}</div>
+
+              <div style={{ marginTop: 8, textAlign: "right" }}>
+                <Button size="small" onClick={() => openAssignModal(r)}>
+                  Quản lý dịch vụ
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+     <h3> Các dịch vụ đã có nếu chưa có bạn có thể thêm mới </h3>
+     <br></br>
       <Table
         columns={columns}
         dataSource={services}
@@ -284,6 +365,7 @@ export default function OwnerRoomServices() {
           <Select
             placeholder="Chọn phòng"
             style={{ width: "100%" }}
+            value={assignRoomId}
             onChange={(v) => {
               setAssignRoomId(v);
               loadAssignList(v);
@@ -315,9 +397,15 @@ export default function OwnerRoomServices() {
                   justifyContent: "space-between",
                 }}
               >
-                <span>
-                  {s.serviceName}
-                </span>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{s.serviceName || s.name}</div>
+                  <div style={{ color: "#666" }}>
+                    Giá: {s.pricePerUnit ? (Number(s.pricePerUnit).toLocaleString("vi-VN") + "₫") : "---"}
+                  </div>
+                  <div style={{ color: "#666" }}>
+                    Loại: {typeLabel(s.type || s.serviceType)}
+                  </div>
+                </div>
 
                 <Button danger onClick={() => unassignService(s.id)}>
                   Xoá
@@ -327,18 +415,64 @@ export default function OwnerRoomServices() {
 
             <h4>Gán thêm dịch vụ:</h4>
 
-            <div>
-              {services.map((svc) => (
-                <Tag
-                  key={svc.id}
-                  color="blue"
-                  style={{ cursor: "pointer", marginBottom: 8 }}
-                  onClick={() => assignService(svc)}
-                >
-                  {svc.name}
-                </Tag>
-              ))}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 140px 120px 100px", gap: 8, alignItems: "center", marginBottom: 12 }}>
+              <Select
+                placeholder="Chọn dịch vụ hoặc 'Tạo mới'"
+                style={{ width: "100%" }}
+                value={selectedServiceId}
+                onChange={(v) => {
+                  setSelectedServiceId(v);
+                  if (v === "new") {
+                    setPricePerUnit(null);
+                    setNewServiceName("");
+                    setServiceType("FIXED");
+                  } else {
+                    const svc = services.find((s) => s.id === v);
+                    setPricePerUnit(svc ? Number(svc.price ?? svc.defaultPrice ?? svc.pricePerUnit ?? null) : null);
+                    setServiceType(svc ? (svc.type ?? svc.serviceType ?? "FIXED") : "FIXED");
+                  }
+                }}
+                showSearch
+                optionFilterProp="children"
+              >
+                {services.map((svc) => (
+                  <Select.Option key={svc.id} value={svc.id}>
+                    {svc.name} {svc.price ? ` - ${svc.price.toLocaleString("vi-VN")}₫` : ""}
+                  </Select.Option>
+                ))}
+                <Select.Option key="__new" value="new">
+                  Tạo dịch vụ mới...
+                </Select.Option>
+              </Select>
+
+              <InputNumber
+                placeholder="Giá"
+                style={{ width: "100%" }}
+                min={0}
+                step={0.01}
+                value={pricePerUnit}
+                onChange={(v) => setPricePerUnit(v)}
+              />
+
+              <Select value={serviceType} onChange={(v) => setServiceType(v)} style={{ width: "100%" }}>
+                <Select.Option value="FIXED">Cố định</Select.Option>
+                <Select.Option value="METERED">Tính theo công tơ</Select.Option>
+              </Select>
+
+              <Button type="primary" onClick={assignServiceById} disabled={!assignRoomId || (!selectedServiceId && !newServiceName) || (pricePerUnit === null || pricePerUnit === undefined)}>
+                Gán
+              </Button>
             </div>
+
+            {selectedServiceId === "new" && (
+              <div style={{ marginBottom: 12 }}>
+                <Input
+                  placeholder="Tên dịch vụ mới"
+                  value={newServiceName}
+                  onChange={(e) => setNewServiceName(e.target.value)}
+                />
+              </div>
+            )}
           </>
         )}
       </Modal>

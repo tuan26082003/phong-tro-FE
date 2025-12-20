@@ -383,7 +383,7 @@ export default function RoomDetail() {
                 })
               }
             >
-              Đặt thuê ngay
+              Đặt lịch xem phòng 
             </Button>
           </Card>
         </Col>

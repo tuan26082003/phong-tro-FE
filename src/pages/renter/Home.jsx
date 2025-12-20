@@ -71,7 +71,7 @@ export default function Home() {
     }
   };
 
-  // SEARCH trên thanh hero → vẫn điều hướng sang trang /search (search page riêng)
+  // SEARCH trên thanh hero → điều hướng sang trang /search (page riêng)
   const search = () => {
     const qs = new URLSearchParams();
     if (keyword) qs.append("keyword", keyword);
@@ -134,7 +134,7 @@ export default function Home() {
 
           <div className="search-box">
             <Input
-              placeholder="Tìm phòng trọ..."
+              placeholder="Tìm Phòng Trọ..."
               size="large"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
@@ -150,6 +150,7 @@ export default function Home() {
             >
               Tìm phòng
             </Button>
+            
           </div>
 
           <div className="category-cards">
@@ -168,8 +169,8 @@ export default function Home() {
                 <HomeOutlined style={{ color: '#FF9800', fontSize: 24 }} />
               </div>
               <div className="category-info">
-                <div className="category-title">Phòng trọ</div>
-                <div className="category-count">49.328 tin phòng trọ</div>
+                <div className="category-title">Phòng Trọ</div>
+                <div className="category-count">49.328 tin Phòng Trọ</div>
               </div>
             </div>
 
@@ -526,18 +527,18 @@ export default function Home() {
           expandIconPosition="end"
         >
           <Panel 
-            header="Tìm phòng trọ trên hệ thống có mất phí không?" 
+            header="Tìm Phòng Trọ trên hệ thống có mất phí không?" 
             key="1"
             className="faq-panel"
           >
             <p>Hoàn toàn miễn phí cho người tìm phòng. Bạn có thể tìm kiếm, xem thông tin chi tiết và liên hệ với chủ trọ mà không mất bất kỳ khoản phí nào.</p>
           </Panel>
           <Panel 
-            header="Thông tin phòng trọ có chính xác và đáng tin cậy không?" 
+            header="Thông tin Phòng Trọ có chính xác và đáng tin cậy không?" 
             key="2"
             className="faq-panel"
           >
-            <p>Tất cả thông tin phòng trọ đều được kiểm duyệt trước khi đăng. Chúng tôi yêu cầu chủ trọ cung cấp đầy đủ thông tin và hình ảnh thực tế để đảm bảo độ tin cậy.</p>
+            <p>Tất cả thông tin Phòng Trọ đều được kiểm duyệt trước khi đăng. Chúng tôi yêu cầu chủ trọ cung cấp đầy đủ thông tin và hình ảnh thực tế để đảm bảo độ tin cậy.</p>
           </Panel>
           <Panel 
             header="Làm thế nào để liên hệ với chủ trọ?" 
@@ -575,7 +576,7 @@ export default function Home() {
             <p>Tùy thuộc vào từng phòng. Thông tin chi tiết về giá phòng, giá điện, nước, internet sẽ được hiển thị rõ ràng trên trang chi tiết phòng và trong hợp đồng thuê.</p>
           </Panel>
           <Panel 
-            header="Tôi cần chuẩn bị gì khi thuê phòng trọ?" 
+            header="Tôi cần chuẩn bị gì khi thuê Phòng Trọ?" 
             key="8"
             className="faq-panel"
           >

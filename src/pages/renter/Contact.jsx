@@ -302,7 +302,7 @@ export default function Contact() {
   const faqs = [
     {
       question: "Làm sao để đăng tin cho thuê phòng?",
-      answer: "Bạn cần đăng ký tài khoản chủ trọ, sau đó vào mục 'Đăng tin' và điền đầy đủ thông tin phòng trọ. Tin đăng sẽ được duyệt trong vòng 24 giờ.",
+      answer: "Bạn cần đăng ký tài khoản chủ trọ, sau đó vào mục 'Đăng tin' và điền đầy đủ thông tin Phòng Trọ. Tin đăng sẽ được duyệt trong vòng 24 giờ.",
     },
     {
       question: "Chi phí đăng tin là bao nhiêu?",

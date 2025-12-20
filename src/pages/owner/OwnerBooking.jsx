@@ -1,8 +1,9 @@
 // src/pages/owner/OwnerBooking.jsx
 
 import { useEffect, useState } from "react";
-import { Table, Button, Space, Modal, Form, Tag, Select, message } from "antd";
+import { Table, Button, Space, Modal, Form, Tag, Select, message, DatePicker, TimePicker } from "antd";
 import { DeleteOutlined, EyeOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 
 import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
@@ -65,7 +66,11 @@ export default function OwnerBooking() {
       const data = res.data.data;
 
       setEditData(data);
-      form.setFieldsValue({ status: data.status });
+      form.setFieldsValue({
+        status: data.status,
+        visitDate: data.appointmentDate ? dayjs(data.appointmentDate) : null,
+        visitTime: data.hourDate ? dayjs(data.hourDate, "HH:mm") : null,
+      });
 
       setModalOpen(true);
     } catch (err) {
@@ -75,12 +80,20 @@ export default function OwnerBooking() {
 
   // SUBMIT EDIT
   const submitEdit = async () => {
-    const values = await form.validateFields();
-
     try {
-      const edit = await axiosClient.put(`${API}/${editData.id}`, {
+      const values = await form.validateFields();
+
+      // Prepare payload; include visit date/time when confirming
+      const payload = {
         status: values.status,
-      });
+      };
+
+      if (values.status === "CONFIRMED") {
+        payload.appointmentDate = values.visitDate ? values.visitDate.format("YYYY-MM-DD") : null;
+        payload.hourDate = values.visitTime ? values.visitTime.format("HH:mm") : null;
+      }
+
+      const edit = await axiosClient.put(`${API}/${editData.id}`, payload);
 
       if (edit.data.status >= 400) {
         toast.success(edit.data.message);
@@ -89,9 +102,14 @@ export default function OwnerBooking() {
       }
 
       message.success("Cập nhật trạng thái thành công");
+      // Show toast notification on screen as well
+      toast.success(edit.data?.message || "Cập nhật trạng thái thành công");
       setModalOpen(false);
       loadBookings();
     } catch (err) {
+      // Validation errors from AntD Form have `errorFields`; ignore them silently
+      if (err && err.errorFields) return;
+
       logAxiosError(err, "Không thể cập nhật trạng thái");
     }
   };
@@ -151,14 +169,7 @@ export default function OwnerBooking() {
       dataIndex: "nameUser",
       render: (t) => <span>{t}</span>,
     },
-    {
-      title: "Ngày thuê",
-      render: (r) => (
-        <span>
-          {r.startDate} → {r.endDate}
-        </span>
-      ),
-    },
+ 
     {
       title: "Giá",
       dataIndex: "totalPrice",
@@ -216,15 +227,12 @@ export default function OwnerBooking() {
         onOk={submitEdit}
       >
         <p>
-          <strong>Phòng:</strong> #{editData?.roomId}
+          <strong>Phòng:</strong> {editData?.roomName}
         </p>
         <p>
-          <strong>Người đặt:</strong> User #{editData?.userId}
+          <strong>Người đặt:</strong> {editData?.nameUser} 
         </p>
-        <p>
-          <strong>Ngày thuê:</strong> {editData?.startDate} →{" "}
-          {editData?.endDate}
-        </p>
+       
 
         <Form form={form} layout="vertical" style={{ marginTop: 18 }}>
           <Form.Item
@@ -238,6 +246,42 @@ export default function OwnerBooking() {
               <Select.Option value="COMPLETED">Hoàn thành</Select.Option>
               <Select.Option value="CANCELLED">Hủy</Select.Option>
             </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="visitDate"
+            label="Ngày đến xem"
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (form.getFieldValue("status") === "CONFIRMED" && !value) {
+                    return Promise.reject(new Error("Vui lòng chọn ngày đến xem"));
+                  }
+
+                  return Promise.resolve();
+                },
+              },
+            ]}
+          >
+            <DatePicker style={{ width: "100%" }} />
+          </Form.Item>
+
+          <Form.Item
+            name="visitTime"
+            label="Giờ đến (h)"
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (form.getFieldValue("status") === "CONFIRMED" && !value) {
+                    return Promise.reject(new Error("Vui lòng chọn giờ đến"));
+                  }
+
+                  return Promise.resolve();
+                },
+              },
+            ]}
+          >
+            <TimePicker format="HH:mm" style={{ width: "100%" }} />
           </Form.Item>
         </Form>
       </Modal>

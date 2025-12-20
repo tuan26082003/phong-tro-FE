@@ -98,23 +98,35 @@ export default function RoomList() {
       ...prev,
       page: pageParam ? Number(pageParam) - 1 : 0,
     }));
-  }, []);
+  }, [location.search]);
 
   const loadRooms = async () => {
     try {
       setLoading(true);
+      const qs = new URLSearchParams(location.search);
+      const qsQ = qs.get("q") || qs.get("keyword") || q;
+      const qsMinPrice = qs.get("minPrice") ? Number(qs.get("minPrice")) : minPrice;
+      const qsMaxPrice = qs.get("maxPrice") ? Number(qs.get("maxPrice")) : maxPrice;
+      const qsMinArea = qs.get("minArea") ? Number(qs.get("minArea")) : minArea;
+      const qsSort = qs.get("sort") || sort;
+      const qsPage = qs.get("page") ? Number(qs.get("page")) - 1 : pagination.page;
 
       const params = {
-        page: pagination.page,
+        page: qsPage,
         size: pagination.size,
         status: "AVAILABLE",
       };
 
-      if (q) params.q = q;
-      if (minPrice) params.minPrice = minPrice;
-      if (maxPrice) params.maxPrice = maxPrice;
-      if (minArea) params.minArea = minArea;
-      if (sort) params.sort = sort;
+      if (qsQ) {
+        params.q = qsQ;
+        params.keyword = qsQ;
+      }
+      if (qsMinPrice) params.minPrice = qsMinPrice;
+      if (qsMaxPrice) params.maxPrice = qsMaxPrice;
+      if (qsMinArea) params.minArea = qsMinArea;
+      if (qsSort) params.sort = qsSort;
+
+      console.debug("[RoomList] loadRooms params:", params, "location.search:", location.search);
 
       const res = await axiosClient.get(API, { params });
       const body = res.data;
@@ -129,6 +141,7 @@ export default function RoomList() {
 
       setPagination((prev) => ({
         ...prev,
+        page: qsPage,
         total: body.totalElements ?? data.length ?? 0,
       }));
     } catch (err) {
@@ -237,7 +250,7 @@ export default function RoomList() {
 
           <div style={{ position: "absolute", textAlign: "center" }}>
             <div style={{ fontSize: 32, fontWeight: 700 }}>
-              Danh sách phòng trọ
+              Danh sách Phòng Trọ
             </div>
             <div style={{ marginTop: 10, fontSize: 17 }}>
               <span
@@ -249,7 +262,7 @@ export default function RoomList() {
 
               <span style={{ margin: "0 6px" }}>›</span>
 
-              <span style={{ color: "#fff" }}>Phòng trọ</span>
+              <span style={{ color: "#fff" }}>Phòng Trọ</span>
             </div>
           </div>
         </div>

@@ -191,7 +191,7 @@ export default function AdminRoom() {
       render: (v, record) => {
         console.log("Type value:", v, "Full record:", record);
         const typeMap = {
-          ROOM: "Phòng trọ",
+          ROOM: "Phòng Trọ",
           HOUSE: "Nhà nguyên căn",
           APARTMENT: "Căn hộ",
         };
@@ -279,7 +279,7 @@ export default function AdminRoom() {
           onChange={(v) => setQuery({ ...query, type: v || "" })}
           style={{ width: 180 }}
         >
-          <Select.Option value="ROOM">Phòng trọ</Select.Option>
+          <Select.Option value="ROOM">Phòng Trọ</Select.Option>
           <Select.Option value="HOUSE">Nhà nguyên căn</Select.Option>
           <Select.Option value="APARTMENT">Căn hộ</Select.Option>
         </Select>
@@ -344,7 +344,7 @@ export default function AdminRoom() {
               rules={[{ required: true, message: "Vui lòng chọn loại phòng" }]}
             >
               <Select placeholder="Chọn loại phòng">
-                <Select.Option value="ROOM">Phòng trọ</Select.Option>
+                <Select.Option value="ROOM">Phòng Trọ</Select.Option>
                 <Select.Option value="HOUSE">Nhà nguyên căn</Select.Option>
                 <Select.Option value="APARTMENT">Căn hộ</Select.Option>
               </Select>

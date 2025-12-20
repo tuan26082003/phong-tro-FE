@@ -90,21 +90,33 @@ export default function Search() {
   const loadRooms = async () => {
     try {
       setLoading(true);
+      // Prefer query string values (from navigation) so Home -> Search passes filters reliably
+      const qs = new URLSearchParams(location.search);
+      const qsKeyword = qs.get("keyword") || qs.get("q") || keyword;
+      const qsType = qs.get("type") || qs.get("roomType") || type;
+      const qsMinArea = qs.get("minArea") ? Number(qs.get("minArea")) : minArea;
+      const qsMaxArea = qs.get("maxArea") ? Number(qs.get("maxArea")) : maxArea;
+      const qsMinCapacity = qs.get("minCapacity") ? Number(qs.get("minCapacity")) : minCapacity;
+      const qsStatus = qs.get("status") || status;
+      const qsPage = qs.get("page") ? Number(qs.get("page")) - 1 : pagination.page;
 
       const params = {
-        page: pagination.page,
+        page: qsPage,
         size: pagination.size,
       };
 
-      if (keyword) params.keyword = keyword;
-      if (type) params.type = type;
-      if (status) params.status = status;
-      if (minArea) params.minArea = minArea;
-      if (maxArea) params.maxArea = maxArea;
-      if (minCapacity) params.minCapacity = minCapacity;
+      if (qsKeyword) params.keyword = qsKeyword;
+      if (qsType) params.type = qsType;
+      if (qsStatus) params.status = qsStatus;
+      if (qsMinArea) params.minArea = qsMinArea;
+      if (qsMaxArea) params.maxArea = qsMaxArea;
+      if (qsMinCapacity) params.minCapacity = qsMinCapacity;
+
+      console.debug("[Search] loadRooms params:", params, "location.search:", location.search);
 
       const res = await axiosClient.get(API, { params });
       const body = res.data;
+      console.debug("[Search] API response:", body);
 
       const data = Array.isArray(body.data)
         ? body.data
@@ -115,6 +127,7 @@ export default function Search() {
       setRooms(data);
       setPagination((prev) => ({
         ...prev,
+        page: qsPage,
         total: body.totalElements ?? data.length ?? 0,
       }));
     } catch (err) {
@@ -205,7 +218,7 @@ export default function Search() {
       {/* HEADER */}
       <div style={{ marginBottom: 24 }}>
         <Title level={2} style={{ marginBottom: 4 }}>
-          Kết quả tìm kiếm phòng trọ
+          Kết quả tìm kiếm Phòng Trọ
         </Title>
         <Paragraph type="secondary" style={{ marginBottom: 0 }}>
           Lọc nâng cao theo diện tích, sức chứa, trạng thái phòng.
@@ -238,7 +251,7 @@ export default function Search() {
               value={type || undefined}
               onChange={(v) => setType(v || "")}
             >
-              <Option value="ROOM">Phòng trọ</Option>
+              <Option value="ROOM">Phòng Trọ</Option>
               <Option value="HOUSE">Nhà nguyên căn</Option>
               <Option value="APARTMENT">Căn hộ</Option>
             </Select>
@@ -399,7 +412,7 @@ export default function Search() {
         {!loading && rooms.length === 0 && (
           <Col span={24}>
             <div style={{ padding: "40px 0", textAlign: "center" }}>
-              <Empty description="Không tìm thấy phòng phù hợp" />
+              <Empty description={keyword ? "Chưa có phòng mà bạn tìm kiếm" : "Không tìm thấy phòng phù hợp"} />
             </div>
           </Col>
         )}

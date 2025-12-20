@@ -44,11 +44,11 @@ export default function RenterLogin() {
     <div style={styles.container}>
       {/* Bên trái - Ảnh */}
       <div style={styles.leftSide}>
-        <img src={loginBg} alt="Phòng trọ" style={styles.image} />
+        <img src={loginBg} alt="Phòng Trọ" style={styles.image} />
         <div style={styles.imageOverlay}>
           <HomeOutlined style={styles.overlayIcon} />
           <h2 style={styles.overlayTitle}>Phòng Trọ Online</h2>
-          <p style={styles.overlayText}>Tìm phòng trọ dễ dàng, nhanh chóng và an toàn</p>
+          <p style={styles.overlayText}>Tìm Phòng Trọ dễ dàng, nhanh chóng và an toàn</p>
         </div>
       </div>
 

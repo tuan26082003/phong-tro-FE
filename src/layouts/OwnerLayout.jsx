@@ -42,14 +42,31 @@ const ownerMenu = [
     label: <Link to="/owner/services">Quản lý dịch vụ</Link>,
   },
   {
+    key: "confirm-payments-monthly",
+    icon: <ClusterOutlined />,
+    label: <Link to="/owner/confirm-payments-monthly">Thanh toán theo tháng</Link>,
+  },
+  {
     key: "room-service-usages",
     icon: <ClusterOutlined />,
     label: <Link to="/owner/room-service-usages">Số liệu sử dụng</Link>,
   },
-{
-    key: "confirm-payments-monthly",
-    icon: <ClusterOutlined />,
-    label: <Link to="/owner/confirm-payments-monthly">Thanh toán theo tháng</Link>,
+
+  
+  // KHÁCH THUÊ
+  {
+    type: "group",
+    label: <span className="menu-group">Khách thuê</span>,
+  },
+  {
+    key: "bookings",
+    icon: <CalendarOutlined />,
+    label: <Link to="/owner/bookings">Đặt phòng</Link>,
+  },
+  {
+    key: "contracts",
+    icon: <BarChartOutlined />,
+    label: <Link to="/owner/contracts">Hợp đồng</Link>,
   },
   // HÓA ĐƠN & THANH TOÁN
   {
@@ -67,21 +84,6 @@ const ownerMenu = [
     label: <Link to="/owner/payments">Thanh toán</Link>,
   },
 
-  // KHÁCH THUÊ
-  {
-    type: "group",
-    label: <span className="menu-group">Khách thuê</span>,
-  },
-  {
-    key: "bookings",
-    icon: <CalendarOutlined />,
-    label: <Link to="/owner/bookings">Đặt phòng</Link>,
-  },
-  {
-    key: "contracts",
-    icon: <BarChartOutlined />,
-    label: <Link to="/owner/contracts">Hợp đồng</Link>,
-  },
 
   // HỆ THỐNG
   {

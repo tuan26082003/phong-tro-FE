@@ -44,6 +44,7 @@ export default function OwnerPayment() {
   const [updateId, setUpdateId] = useState(null);
 
   const [form] = Form.useForm();
+  const [updateForm] = Form.useForm();
 
   // =====================================================
   // LOG ERROR
@@ -168,23 +169,54 @@ export default function OwnerPayment() {
   // =====================================================
   const openUpdateStatus = (id) => {
     setUpdateId(id);
-    setModalUpdateOpen(true);
+    // load payment details to prefill date range
+    (async () => {
+      try {
+        const res = await axiosClient.get(`${API}/${id}`);
+        const d = res.data.data || {};
+        if (d.startDate || d.endDate) {
+          updateForm.setFieldsValue({
+            dateRange: [
+              d.startDate ? dayjs(d.startDate) : null,
+              d.endDate ? dayjs(d.endDate) : null,
+            ],
+          });
+        } else {
+          updateForm.resetFields();
+        }
+      } catch (err) {
+        // ignore prefilling errors
+        updateForm.resetFields();
+      }
+
+      setModalUpdateOpen(true);
+    })();
   };
 
   const submitUpdateStatus = async (status) => {
     try {
-      const res = await axiosClient.put(`${API}/${updateId}`, {
-        paymentStatus: status,
-      });
+      // If marking as PAID, require date range
+      let payload = { paymentStatus: status };
 
-      // Backend trả về {code: 201, data: {...}, message: "..."}
-      // Axios chỉ throw error khi HTTP status >= 400, nên không cần check thêm
-      
-      const message = res.data.message || "Cập nhật trạng thái thành công";
-      toast.success(message);
+      if (status === "PAID") {
+        await updateForm.validateFields();
+        const range = updateForm.getFieldValue("dateRange") || [];
+        if (range && range.length === 2 && range[0] && range[1]) {
+          payload.startDate = range[0].format("YYYY-MM-DD");
+          payload.endDate = range[1].format("YYYY-MM-DD");
+        }
+      }
+
+      const res = await axiosClient.put(`${API}/${updateId}`, payload);
+
+      const messageText = res.data.message || "Cập nhật trạng thái thành công";
+      toast.success(messageText);
       setModalUpdateOpen(false);
+      updateForm.resetFields();
       loadPayments();
     } catch (err) {
+      if (err && err.errorFields) return; // validation errors
+
       const errorMessage = err.response?.data?.message || "Không thể cập nhật trạng thái";
       toast.error(errorMessage);
     }
@@ -205,11 +237,7 @@ export default function OwnerPayment() {
     },
     { title: "Phương thức", dataIndex: "paymentMethod" },
     { title: "Trạng thái", dataIndex: "paymentStatus" },
-    {
-      title: "Ngày thanh toán",
-      dataIndex: "paymentDate",
-      render: (v) => v && dayjs(v).format("DD/MM/YYYY HH:mm"),
-    },
+   
     { title: "Chu kỳ", dataIndex: "paymentPeriod", render: (v) => v || "---" },
     {
       title: "Hành động",
@@ -414,10 +442,19 @@ export default function OwnerPayment() {
       {/* MODAL UPDATE STATUS */}
       <Modal
         open={modalUpdateOpen}
-        onCancel={() => setModalUpdateOpen(false)}
+        onCancel={() => {
+          setModalUpdateOpen(false);
+          updateForm.resetFields();
+        }}
         title="Cập nhật trạng thái thanh toán"
         footer={null}
       >
+        <Form form={updateForm} layout="vertical">
+          <Form.Item name="dateRange" label="Khoảng ngày (start - end)">
+            <DatePicker.RangePicker style={{ width: "100%" }} />
+          </Form.Item>
+        </Form>
+
         <p>Chọn trạng thái mới:</p>
 
         <Space direction="vertical" style={{ width: "100%" }}>

@@ -1,5 +1,6 @@
 // src/layouts/RenterLayout.jsx
 import { useState, useEffect } from "react";
+import logo from "../assets/logo.png";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { Button, Avatar, Dropdown, Space, Typography } from "antd";
 import { 
@@ -105,16 +106,16 @@ export default function RenterLayout() {
       {/* HEADER */}
       <header className="header">
         <div className="header-left">
-          <Link to="/" className="logo">
-            <HomeOutlined className="logo-icon" style={{ color: '#2196F3' }} />
-            <span className="logo-text" style={{ color: '#2196F3' }}>PHÒNG TRỌ</span>
+          <Link to="/" className="logo" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <img src={logo} alt="Logo" style={{ height: 56, width: 56, objectFit: 'contain' }} />
+            <span className="logo-text" style={{ color: '#2196F3', fontWeight: 800, fontSize: 24 }}>Phòng trọ DHT</span>
           </Link>
         </div>
 
         {/* DESKTOP NAV */}
         <nav className="nav nav-desktop">
           <Link to="/">Trang chủ</Link>
-          <Link to="/rooms">Phòng trọ</Link>
+          <Link to="/rooms">Phòng Trọ</Link>
           <Link to="/about">Giới thiệu</Link>
           <Link to="/contact">Hỗ trợ</Link>
         </nav>
@@ -210,7 +211,7 @@ export default function RenterLayout() {
         <div className="mobile-menu-header">
           <span className="mobile-logo">
             <HomeOutlined style={{ marginRight: 8 }} />
-            PHÒNG TRỌ
+            Phòng Trọ
           </span>
           <CloseOutlined
             className="close-btn"
@@ -247,7 +248,7 @@ export default function RenterLayout() {
             Trang chủ
           </Link>
           <Link to="/rooms" onClick={() => setMenuOpen(false)}>
-            Phòng trọ
+            Phòng Trọ
           </Link>
           <Link to="/about" onClick={() => setMenuOpen(false)}>
             Giới thiệu
@@ -307,10 +308,10 @@ export default function RenterLayout() {
           <div className="footer-col">
             <h3 className="footer-logo">
               <HomeOutlined style={{ marginRight: 8 }} />
-              PHÒNG TRỌ
+              Phòng Trọ
             </h3>
             <p className="footer-desc">
-              Nền tảng tìm phòng trọ thông minh – minh bạch – an toàn – kết nối
+              Nền tảng tìm Phòng Trọ thông minh – minh bạch – an toàn – kết nối
               nhanh giữa chủ trọ và người thuê.
             </p>
 
@@ -333,7 +334,7 @@ export default function RenterLayout() {
 
           <div className="footer-col">
             <h4>Dành cho người thuê</h4>
-            <Link>Tìm kiếm phòng trọ</Link>
+            <Link>Tìm kiếm Phòng Trọ</Link>
             <Link>Phòng giá tốt</Link>
             <Link>Phòng gần trường học</Link>
             <Link>Phòng gần khu công nghiệp</Link>
@@ -343,7 +344,7 @@ export default function RenterLayout() {
           <div className="footer-col">
             <h4>Dành cho chủ trọ</h4>
             <Link>Đăng tin cho thuê</Link>
-            <Link>Quản lý phòng trọ</Link>
+            <Link>Quản lý Phòng Trọ</Link>
             <Link>Các gói dịch vụ</Link>
             <Link>Chính sách & hỗ trợ</Link>
             <Link>Bảng giá</Link>
@@ -369,7 +370,7 @@ export default function RenterLayout() {
           <p>Giấy phép TMĐT số 01A-2025 / Bộ Công Thương</p>
           <hr />
           <p>
-            © 2025 PHÒNG TRỌ – Nền tảng tìm phòng trọ thông minh tại Việt Nam.
+            © 2025 Phòng Trọ – Nền tảng tìm Phòng Trọ thông minh tại Việt Nam.
           </p>
         </div>
       </footer>

@@ -126,7 +126,7 @@ export default function OwnerTenant() {
   return (
     <div>
       <h2>Danh sách người đang thuê trọ</h2>
-
+<br></br>
       <Table
         columns={columns}
         dataSource={tenants}

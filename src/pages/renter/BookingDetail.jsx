@@ -52,15 +52,7 @@ export default function BookingDetail() {
       }
 
       setBooking(bookingData);
-
-      // song song lấy room + service
-      const [roomRes, serviceRes] = await Promise.all([
-        axiosClient.get(`/api/rooms/${bookingData.roomId}`),
-        axiosClient.get(`/api/room-services/assign/room/${bookingData.roomId}`),
-      ]);
-
-      setRoom(roomRes.data?.data || null);
-      setServices(serviceRes.data?.data || []);
+     
     } catch (err) {
       console.error("LOAD BOOKING DETAIL ERROR:", err);
       toast.error("Không thể tải dữ liệu booking");
@@ -81,11 +73,11 @@ export default function BookingDetail() {
       </div>
     );
 
-  if (!booking || !room)
+  if (!booking)
     return (
       <div style={{ textAlign: "center", marginTop: 40 }}>
         <Title level={4}>Không tìm thấy dữ liệu</Title>
-        <Button onClick={() => navigate("/bookings")}>
+        <Button onClick={() => navigate("/booking-list")}>
           Quay lại danh sách
         </Button>
       </div>
@@ -176,16 +168,10 @@ export default function BookingDetail() {
               bodyStyle={{ padding: 22 }}
               title={<strong>Thông tin Booking</strong>}
             >
-              <p>
-                <CalendarOutlined /> &nbsp;
-                <strong>
-                  {booking.startDate} → {booking.endDate}
-                </strong>
-              </p>
 
               <p>
                 <DollarCircleOutlined />{" "}
-                <strong>{booking.totalPrice.toLocaleString("vi-VN")}₫</strong>
+                <strong>Gía đặt cọc: {booking.totalPrice.toLocaleString("vi-VN")}₫</strong>
               </p>
 
               <p>Trạng thái: {statusTag}</p>
@@ -194,103 +180,11 @@ export default function BookingDetail() {
 
               <p>Ngày tạo: {new Date(booking.createdAt).toLocaleString()}</p>
 
-              <p>Mã phòng: #{booking.roomId}</p>
-              <p>Mã người dùng: #{booking.userId}</p>
+              <p>Tên phòng: {booking.roomName}</p>
+              <p>Tên người dùng đặt : {booking.nameUser}</p>
             </Card>
           </Col>
 
-          {/* ======== ROOM INFO ======== */}
-          <Col xs={24} md={10}>
-            <Card
-              style={{ borderRadius: 12 }}
-              bodyStyle={{ padding: 22 }}
-              title={<strong>Thông tin Phòng</strong>}
-            >
-              <img
-                src={
-                  room.images?.length
-                    ? getImageUrl(room.images[0])
-                    : "https://placehold.co/600x400?text=Room"
-                }
-                alt="room"
-                style={{
-                  width: "100%",
-                  height: 220,
-                  objectFit: "cover",
-                  borderRadius: 10,
-                  marginBottom: 16,
-                }}
-              />
-
-              <Title level={4}>{room.name}</Title>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: 8,
-                  alignItems: "center",
-                  marginBottom: 8,
-                }}
-              >
-                <EnvironmentOutlined />
-                <Text>{room.address}</Text>
-              </div>
-
-              <p>
-                <HomeOutlined /> Diện tích: {room.area} m²
-              </p>
-              <p>
-                <TeamOutlined /> Sức chứa: {room.capacity} người
-              </p>
-              <p>
-                <UserOutlined /> Chủ trọ: <strong>{room.ownerName}</strong>
-              </p>
-
-              <Divider />
-
-              <h4>Tiện ích</h4>
-              <Paragraph style={{ whiteSpace: "pre-line" }}>
-                {room.utilities || "Không có tiện ích."}
-              </Paragraph>
-            </Card>
-          </Col>
-        </Row>
-
-        {/* ======== SERVICES ======== */}
-        <Row style={{ marginTop: 24 }}>
-          <Col xs={24} md={24}>
-            <Card
-              style={{ borderRadius: 12 }}
-              bodyStyle={{ padding: 22 }}
-              title={<strong>Dịch vụ kèm theo phòng</strong>}
-            >
-              {loadingServices ? (
-                <Skeleton active paragraph={{ rows: 3 }} />
-              ) : services.length === 0 ? (
-                <Empty description="Không có dịch vụ nào" />
-              ) : (
-                <List
-                  itemLayout="horizontal"
-                  dataSource={services}
-                  renderItem={(item) => (
-                    <List.Item>
-                      <List.Item.Meta
-                        title={item.serviceName}
-                        description={
-                          <Text type="secondary">
-                            Giá:{" "}
-                            <strong>
-                              {item.price.toLocaleString("vi-VN")}₫
-                            </strong>
-                          </Text>
-                        }
-                      />
-                    </List.Item>
-                  )}
-                />
-              )}
-            </Card>
-          </Col>
         </Row>
       </div>
     </div>

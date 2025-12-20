@@ -264,7 +264,7 @@ export default function PostRoom() {
       >
         <TextArea
           rows={4}
-          placeholder="Ví dụ: Tôi có 5 năm kinh nghiệm quản lý nhà trọ, hiện đang sở hữu 2 dãy phòng trọ tại..."
+          placeholder="Ví dụ: Tôi có 5 năm kinh nghiệm quản lý nhà trọ, hiện đang sở hữu 2 dãy Phòng Trọ tại..."
           maxLength={500}
           showCount
           style={{ borderRadius: 8 }}

@@ -466,7 +466,7 @@ export default function ForgotPassword() {
       <div style={styles.imageSection}>
         <img
           src={require("../../assets/tro3.jpg")}
-          alt="Phòng trọ"
+          alt="Phòng Trọ"
           style={styles.image}
         />
         <div style={styles.imageOverlay}></div>

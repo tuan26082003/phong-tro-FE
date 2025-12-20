@@ -50,6 +50,26 @@
   color: #2196F3;
 }
 
+/* Increase weight and size for header / nav text */
+.logo-text {
+  font-weight: 300;
+  font-size: 24px;
+  letter-spacing: 0.5px;
+  color: #2196F3;
+}
+.nav a {
+  font-weight: 300;
+  font-size: 16px;
+}
+.mobile-nav a {
+  font-weight: 300;
+  font-size: 20px;
+}
+.mobile-logo {
+  font-weight: 300;
+  font-size: 22px;
+}
+
 .nav {
   display: flex;
   gap: 24px;
@@ -57,7 +77,7 @@
 
 .nav a {
   color: #333;
-  font-size: 15px;
+  font-size: 17px;
   text-decoration: none;
 }
 

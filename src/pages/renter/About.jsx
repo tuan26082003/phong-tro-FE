@@ -215,13 +215,13 @@ export default function About() {
   const features = [
     {
       icon: <HomeOutlined style={styles.featureIcon} />,
-      title: "Phòng trọ đa dạng",
-      desc: "Hàng nghìn phòng trọ từ giá rẻ đến cao cấp, phù hợp với mọi nhu cầu và ngân sách của bạn.",
+      title: "Phòng Trọ đa dạng",
+      desc: "Hàng nghìn Phòng Trọ từ giá rẻ đến cao cấp, phù hợp với mọi nhu cầu và ngân sách của bạn.",
     },
     {
       icon: <SafetyOutlined style={styles.featureIcon} />,
       title: "An toàn & Uy tín",
-      desc: "Thông tin phòng trọ được xác minh kỹ lưỡng, đảm bảo an toàn cho người thuê.",
+      desc: "Thông tin Phòng Trọ được xác minh kỹ lưỡng, đảm bảo an toàn cho người thuê.",
     },
     {
       icon: <CustomerServiceOutlined style={styles.featureIcon} />,
@@ -244,12 +244,12 @@ export default function About() {
     {
       icon: <StarOutlined style={styles.valueIconInner} />,
       title: "Chất lượng hàng đầu",
-      desc: "Cam kết mang đến những phòng trọ chất lượng, được kiểm duyệt nghiêm ngặt.",
+      desc: "Cam kết mang đến những Phòng Trọ chất lượng, được kiểm duyệt nghiêm ngặt.",
     },
     {
       icon: <CheckCircleOutlined style={styles.valueIconInner} />,
       title: "Minh bạch thông tin",
-      desc: "Mọi thông tin về phòng trọ đều rõ ràng, chính xác, không gây nhầm lẫn.",
+      desc: "Mọi thông tin về Phòng Trọ đều rõ ràng, chính xác, không gây nhầm lẫn.",
     },
     {
       icon: <TeamOutlined style={styles.valueIconInner} />,
@@ -298,7 +298,7 @@ export default function About() {
           <div style={styles.heroStats}>
             <div style={styles.statItem}>
               <div style={styles.statNumber}>10K+</div>
-              <div style={styles.statLabel}>Phòng trọ</div>
+              <div style={styles.statLabel}>Phòng Trọ</div>
             </div>
             <div style={styles.statItem}>
               <div style={styles.statNumber}>50K+</div>
@@ -316,7 +316,7 @@ export default function About() {
       <div style={styles.section}>
         <Title style={styles.sectionTitle}>Tại sao chọn PhongTro?</Title>
         <Paragraph style={styles.sectionSubtitle}>
-          Chúng tôi cung cấp giải pháp tìm phòng trọ toàn diện với nhiều tính năng vượt trội
+          Chúng tôi cung cấp giải pháp tìm Phòng Trọ toàn diện với nhiều tính năng vượt trội
         </Paragraph>
         <Row gutter={[24, 24]}>
           {features.map((feature, index) => (
@@ -369,7 +369,7 @@ export default function About() {
                 >
                   PhongTro được thành lập vào năm 2020 với sứ mệnh đơn giản: 
                   giúp mọi người tìm được nơi ở phù hợp một cách dễ dàng nhất. 
-                  Chúng tôi hiểu rằng việc tìm phòng trọ có thể rất mệt mỏi 
+                  Chúng tôi hiểu rằng việc tìm Phòng Trọ có thể rất mệt mỏi 
                   và tốn thời gian.
                 </Paragraph>
                 <Paragraph

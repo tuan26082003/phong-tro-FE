@@ -6,11 +6,9 @@ import {
   Card,
   Row,
   Col,
-  DatePicker,
   Typography,
   Button,
   Divider,
-  Skeleton,
 } from "antd";
 import {
   HomeOutlined,
@@ -20,7 +18,6 @@ import {
 } from "@ant-design/icons";
 import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
-import dayjs from "dayjs";
 import { getImageUrl } from "../../utils/imageHelper";
 
 const { Title, Text } = Typography;
@@ -31,8 +28,6 @@ export default function Booking() {
 
   const room = location.state?.room || null;
 
-  const [startDate, setStartDate] = useState(dayjs());
-  const [endDate, setEndDate] = useState(dayjs().add(30, "day"));
   const [loading, setLoading] = useState(false);
 
   if (!room)
@@ -51,8 +46,6 @@ export default function Booking() {
 
       const body = {
         roomId: room.id,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
       };
 
       const res = await axiosClient.post("/api/bookings", body);
@@ -64,7 +57,7 @@ export default function Booking() {
       }
 
       toast.success("Đặt phòng thành công");
-      navigate(`/booking/${data.data.id}`);
+      navigate(`/booking-list`);
     } catch (err) {
       console.error(err);
       toast.error("Không thể đặt phòng");
@@ -204,28 +197,10 @@ export default function Booking() {
 
           {/* FORM */}
           <Col xs={24} md={12}>
-            <div style={{ padding: 8 }}>
-              <Text style={{ fontSize: 15, fontWeight: 500 }}>
-                Ngày bắt đầu
-              </Text>
-              <DatePicker
-                size="large"
-                style={{ width: "100%", marginBottom: 20 }}
-                value={startDate}
-                onChange={setStartDate}
-                format="YYYY-MM-DD"
-              />
-
-              <Text style={{ fontSize: 15, fontWeight: 500 }}>
-                Ngày kết thúc
-              </Text>
-              <DatePicker
-                size="large"
-                style={{ width: "100%", marginBottom: 20 }}
-                value={endDate}
-                onChange={setEndDate}
-                format="YYYY-MM-DD"
-              />
+            <div style={{ padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
+              <div style={{ marginBottom: 12, color: '#666' }}>
+                Kiểm tra thông tin phòng, sau khi xác nhận hệ thống sẽ gửi yêu cầu đặt phòng cho chủ trọ.
+              </div>
 
               <Divider />
 

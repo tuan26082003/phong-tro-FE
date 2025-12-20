@@ -179,7 +179,7 @@ export default function OwnerRooms() {
       render: (v, record) => {
         console.log("Type value:", v, "Full record:", record);
         const typeMap = {
-          ROOM: "Phòng trọ",
+          ROOM: "Phòng Trọ",
           HOUSE: "Nhà nguyên căn",
           APARTMENT: "Căn hộ",
         };
@@ -267,7 +267,7 @@ export default function OwnerRooms() {
           onChange={(v) => setQuery({ ...query, type: v || "" })}
           style={{ width: 180 }}
         >
-          <Select.Option value="ROOM">Phòng trọ</Select.Option>
+          <Select.Option value="ROOM">Phòng Trọ</Select.Option>
           <Select.Option value="HOUSE">Nhà nguyên căn</Select.Option>
           <Select.Option value="APARTMENT">Căn hộ</Select.Option>
         </Select>
@@ -332,7 +332,7 @@ export default function OwnerRooms() {
               rules={[{ required: true, message: "Vui lòng chọn loại phòng" }]}
             >
               <Select placeholder="Chọn loại phòng">
-                <Select.Option value="ROOM">Phòng trọ</Select.Option>
+                <Select.Option value="ROOM">Phòng Trọ</Select.Option>
                 <Select.Option value="HOUSE">Nhà nguyên căn</Select.Option>
                 <Select.Option value="APARTMENT">Căn hộ</Select.Option>
               </Select>
@@ -391,7 +391,7 @@ export default function OwnerRooms() {
 
           <Form.Item
             name="facilities"
-            label="Tiện ích"
+            label="Tiện ích (Nhấn Enter sau mỗi tiện ích)"
             tooltip="Nhấn Enter sau mỗi tiện ích"
           >
             <Select

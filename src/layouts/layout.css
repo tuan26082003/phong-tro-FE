@@ -5,6 +5,15 @@
   box-sizing: border-box;
 }
 
+/* Global font */
+body {
+  font-family: 'Questrial', sans-serif;
+  font-size: 17px; /* increased base size */
+  font-weight: 500; /* slightly bolder by default */
+  color: #222;
+  letter-spacing: 0.2px;
+}
+
 .layout-wrapper {
   min-height: 100vh;
   display: flex;
@@ -79,6 +88,25 @@
   color: #333;
   font-size: 17px;
   text-decoration: none;
+}
+
+/* Renter layout nav: slightly larger and bolder for readability */
+.nav-desktop a {
+  font-size: 19px; /* a bit larger for header nav */
+  font-weight: 600; /* stronger emphasis */
+  letter-spacing: 0.2px;
+}
+
+/* Admin & Owner sidebar: use slightly thinner text for a lighter look */
+.admin-sider .ant-menu,
+.owner-sider .ant-menu {
+  font-weight: 400;
+}
+
+/* Menu group labels inside our custom menu group span */
+.menu-group {
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
 }
 
 .nav a:hover {

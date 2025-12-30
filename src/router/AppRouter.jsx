@@ -21,8 +21,7 @@ import OwnerRoomServiceUsage from "../pages/owner/OwnerRoomServiceUsage";
 import OwnerChangePassword from "../pages/owner/OwnerChangePassword";
 import OwnerBooking from "../pages/owner/OwnerBooking";
 
-import Login from "../pages/renter/Login";
-import Register from "../pages/renter/Register";
+
 import Home from "../pages/renter/Home";
 import RoomList from "../pages/renter/RoomList";
 import RoomDetail from "../pages/renter/RoomDetail";
@@ -35,7 +34,6 @@ import ChangePassword from "../pages/renter/ChangePassword";
 import BookingDetail from "../pages/renter/BookingDetail";
 
 import RenterPrivateRoute from "./RenterPrivateRoute";
-import ForgotPassword from "../pages/renter/ForgotPassword";
 import About from "../pages/renter/About";
 import PostRoom from "../pages/renter/PostRoom";
 import AdminRole from "../pages/admin/AdminRole";
@@ -118,9 +116,6 @@ export default function AppRouter() {
           />
         </Route>
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
         {/* OWNER */}
 
         <Route

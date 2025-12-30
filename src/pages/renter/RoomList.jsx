@@ -20,7 +20,7 @@ import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
 import { getImageUrl } from "../../utils/imageHelper";
 
-const API = "/api/rooms";
+const API = "/api/search/rooms/advanced";
 const { Option } = Select;
 const { Title, Paragraph, Text } = Typography;
 
@@ -81,14 +81,14 @@ export default function RoomList() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
 
-    const qParam = params.get("q") || params.get("keyword") || "";
+    const kwParam = params.get("keyword") || params.get("q") || "";
     const minPriceParam = params.get("minPrice");
     const maxPriceParam = params.get("maxPrice");
     const minAreaParam = params.get("minArea");
     const sortParam = params.get("sort") || "";
     const pageParam = params.get("page");
 
-    setQ(qParam);
+    setQ(kwParam);
     setMinPrice(minPriceParam ? Number(minPriceParam) : undefined);
     setMaxPrice(maxPriceParam ? Number(maxPriceParam) : undefined);
     setMinArea(minAreaParam ? Number(minAreaParam) : undefined);
@@ -104,7 +104,7 @@ export default function RoomList() {
     try {
       setLoading(true);
       const qs = new URLSearchParams(location.search);
-      const qsQ = qs.get("q") || qs.get("keyword") || q;
+      const qsQ = qs.get("keyword") || qs.get("q") || q;
       const qsMinPrice = qs.get("minPrice") ? Number(qs.get("minPrice")) : minPrice;
       const qsMaxPrice = qs.get("maxPrice") ? Number(qs.get("maxPrice")) : maxPrice;
       const qsMinArea = qs.get("minArea") ? Number(qs.get("minArea")) : minArea;
@@ -114,11 +114,10 @@ export default function RoomList() {
       const params = {
         page: qsPage,
         size: pagination.size,
-        status: "AVAILABLE",
+        status: status || "AVAILABLE",
       };
 
       if (qsQ) {
-        params.q = qsQ;
         params.keyword = qsQ;
       }
       if (qsMinPrice) params.minPrice = qsMinPrice;

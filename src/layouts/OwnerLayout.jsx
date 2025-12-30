@@ -1,5 +1,7 @@
 import { Layout, Menu, Avatar, Dropdown, Badge } from "antd";
 import { Outlet, Link, useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 import {
   HomeOutlined,
   ApartmentOutlined,
@@ -119,17 +121,23 @@ const chatMenu = {
 
 export default function OwnerLayout() {
   const navigate = useNavigate();
+  const auth = useContext(AuthContext);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-    navigate("/", { replace: true });
+    if (auth && typeof auth.logout === "function") {
+      auth.logout();
+    } else {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      navigate("/", { replace: true });
+    }
   };
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Sider
+        className="owner-sider"
         width={240}
         style={{
           background: "linear-gradient(to bottom, #001529, #003865)",
@@ -163,7 +171,7 @@ export default function OwnerLayout() {
             zIndex: 100,
           }}
         >
-          <div style={{ fontSize: 20, fontWeight: 600 }}>
+          <div style={{ fontSize: 20, fontWeight: 400 }}>
             Bảng điều khiển chủ trọ
           </div>
 

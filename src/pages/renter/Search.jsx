@@ -19,6 +19,7 @@ import { SearchOutlined, EnvironmentOutlined, HomeOutlined, TeamOutlined } from 
 import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
 import { getImageUrl } from "../../utils/imageHelper";
+import RoomCard from "../../components/RoomCard";
 
 const API = "/api/search/rooms/advanced";
 const { Option } = Select;
@@ -312,100 +313,7 @@ export default function Search() {
       <Row gutter={[24, 24]}>
         {rooms.map((room) => (
           <Col xs={24} sm={12} md={6} key={room.id}>
-            <Card
-              hoverable
-              loading={loading}
-              style={{
-                borderRadius: 12,
-                overflow: "hidden",
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                transition: "all 0.3s"
-              }}
-              bodyStyle={{ padding: 16 }}
-              cover={
-                <img
-                  src={
-                    room.images && room.images.length > 0
-                      ? getImageUrl(room.images[0])
-                      : "https://placehold.co/900x600?text=Room"
-                  }
-                  alt={room.name}
-                  style={{ height: 200, objectFit: "cover" }}
-                />
-              }
-              onClick={() => navigate(`/rooms/${room.id}`)}
-            >
-              {/* Tên phòng */}
-              <div style={{ marginBottom: 8 }}>
-                <span style={{ fontSize: 17, fontWeight: 600, color: "#333" }}>
-                  {room.name}
-                </span>
-              </div>
-
-              {/* Tag trạng thái */}
-              <div style={{ marginBottom: 12 }}>
-                {getStatusTag(room.status)}
-              </div>
-
-              {/* Địa chỉ */}
-              <div
-                style={{
-                  color: "#666",
-                  fontSize: 14,
-                  marginBottom: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <EnvironmentOutlined style={{ fontSize: 16, color: "#1890ff" }} />
-                <span>{room.address}</span>
-              </div>
-
-              {/* Thông tin phòng */}
-              <div style={{ fontSize: 14, color: "#666", marginBottom: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                  <HomeOutlined style={{ fontSize: 16, color: "#52c41a" }} />
-                  <span>{room.area} m²</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <TeamOutlined style={{ fontSize: 16, color: "#fa8c16" }} />
-                  <span>{room.capacity} người</span>
-                </div>
-              </div>
-
-              {/* Giá */}
-              <div style={{ marginTop: "auto", paddingTop: 12, borderTop: "1px solid #f0f0f0", marginBottom: 12 }}>
-                <span style={{ fontSize: 20, fontWeight: 700, color: "#d4380d" }}>
-                  {room.price?.toLocaleString("vi-VN") || "0"}₫
-                </span>
-                <span style={{ fontSize: 14, color: "#999", marginLeft: 4 }}>
-                  /tháng
-                </span>
-              </div>
-
-              {/* Nút xem chi tiết */}
-              <Button 
-                type="primary" 
-                block
-                style={{
-                  background: "#1890ff",
-                  borderColor: "#1890ff",
-                  borderRadius: 8,
-                  fontWeight: 600,
-                  height: 38
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/rooms/${room.id}`);
-                }}
-              >
-                Xem chi tiết
-              </Button>
-            </Card>
+            <RoomCard room={room} loading={loading} />
           </Col>
         ))}
 

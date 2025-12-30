@@ -1,5 +1,5 @@
 // src/layouts/RenterLayout.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import logo from "../assets/logo.png";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { Button, Avatar, Dropdown, Space, Typography } from "antd";
@@ -14,31 +14,34 @@ import {
   MessageOutlined
 } from "@ant-design/icons";
 import "./layout.css";
+import LoginModal from "../components/LoginModal";
+import { AuthContext } from "../context/AuthContext";
 
 const { Text } = Typography;
 
 export default function RenterLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [modalInitialMode, setModalInitialMode] = useState("login");
+  const [postLoginAction, setPostLoginAction] = useState(null);
   const navigate = useNavigate();
+  const auth = useContext(AuthContext);
 
-  // Đọc user từ localStorage
+  // keep layout's currentUser in sync with AuthContext
   useEffect(() => {
-    try {
-      const token = localStorage.getItem("token");
-      const userStr = localStorage.getItem("user");
-
-      if (token && userStr) {
-        const user = JSON.parse(userStr);
-        setCurrentUser(user.user); // user là object chứa fullName, email, roleName...
-      } else {
+    // AuthContext stores the whole userData object (accessToken, refreshToken, user, role)
+    if (auth?.user) {
+      try {
+        const parsed = auth.user;
+        setCurrentUser(parsed.user || parsed);
+      } catch (e) {
         setCurrentUser(null);
       }
-    } catch (e) {
-      console.error("PARSE USER ERROR:", e);
+    } else {
       setCurrentUser(null);
     }
-  }, []);
+  }, [auth?.user]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -107,8 +110,8 @@ export default function RenterLayout() {
       <header className="header">
         <div className="header-left">
           <Link to="/" className="logo" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src={logo} alt="Logo" style={{ height: 56, width: 56, objectFit: 'contain' }} />
-            <span className="logo-text" style={{ color: '#2196F3', fontWeight: 800, fontSize: 24 }}>Phòng trọ DHT</span>
+            <img src={logo} alt="Logo" style={{ height: 48, width: 48, objectFit: 'contain' }} />
+            <span className="logo-text" style={{ color: '#2196F3', fontWeight: 800, fontSize: 22 }}>Phòng trọ DHT</span>
           </Link>
         </div>
 
@@ -123,9 +126,17 @@ export default function RenterLayout() {
         {/* DESKTOP AUTH */}
         <div className="auth auth-desktop">
           <Space size="large">
-            <MessageOutlined 
-              className="header-icon" 
-              onClick={() => navigate("/chat")}
+            <MessageOutlined
+              className="header-icon"
+              onClick={() => {
+                if (currentUser) {
+                  navigate("/chat");
+                } else {
+                  setPostLoginAction("chat");
+                  setModalInitialMode("login");
+                  setShowLoginModal(true);
+                }
+              }}
               style={{ cursor: "pointer" }}
             />
             {currentUser ? (
@@ -149,52 +160,66 @@ export default function RenterLayout() {
               </Dropdown>
             ) : (
               <Space size="middle">
-                <Button 
+                <Button
                   size="large"
-                  onClick={() => navigate("/login")}
+                  onClick={() => {
+                    setModalInitialMode("login");
+                    setShowLoginModal(true);
+                  }}
                   className="btn-login"
-                  style={{ 
+                  style={{
                     borderRadius: 8,
                     padding: "0 24px",
                     backgroundColor: "#fff",
                     borderColor: "#2196F3",
                     color: "#666",
-                    fontWeight: 600
+                    fontWeight: 600,
                   }}
                 >
                   Đăng nhập
                 </Button>
-                 <Button 
+
+                <Button
                   type="primary"
                   size="large"
-                  onClick={() => navigate("/register")}
+                  onClick={() => {
+                    setModalInitialMode("register");
+                    setShowLoginModal(true);
+                  }}
                   className="btn-register"
-                  style={{ 
+                  style={{
                     borderRadius: 8,
                     padding: "0 24px",
                     backgroundColor: "#2196F3",
                     borderColor: "#2196F3",
                     color: "#fff",
-                    fontWeight: 600
+                    fontWeight: 600,
                   }}
                 >
                   Đăng ký
                 </Button>
-                <Button 
+
+                <Button
                   size="large"
-                  onClick={() => navigate("/post-room")}
-                  style={{ 
+                  onClick={() => {
+                    if (currentUser) {
+                      navigate("/post-room");
+                    } else {
+                      setModalInitialMode("postroom");
+                      setShowLoginModal(true);
+                    }
+                  }}
+                  style={{
                     borderRadius: 8,
                     padding: "0 24px",
                     backgroundColor: "#fff",
                     borderColor: "#2196F3",
                     color: "#666",
-                    fontWeight: 600
+                    fontWeight: 600,
                   }}
                 >
                   Đăng tin
                 </Button>
-               
               </Space>
             )}
           </Space>
@@ -272,30 +297,61 @@ export default function RenterLayout() {
             </Button>
           ) : (
             <>
-              <Button
-                block
-                type="default"
-                onClick={() => {
-                  setMenuOpen(false);
-                  navigate("/login");
-                }}
-              >
-                Đăng nhập
-              </Button>
+                <Button
+                  block
+                  type="default"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setModalInitialMode("login");
+                    setShowLoginModal(true);
+                  }}
+                >
+                  Đăng nhập
+                </Button>
               <Button
                 block
                 type="primary"
                 onClick={() => {
                   setMenuOpen(false);
-                  navigate("/register");
+                  setModalInitialMode("register");
+                  setShowLoginModal(true);
                 }}
               >
                 Đăng ký
+              </Button>
+              <Button
+                block
+                type="default"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setModalInitialMode("postroom");
+                  setShowLoginModal(true);
+                }}
+                style={{ marginTop: 8 }}
+              >
+                Đăng tin
               </Button>
             </>
           )}
         </div>
       </div>
+
+      <LoginModal
+        visible={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        initialMode={modalInitialMode}
+        onLoginSuccess={() => {
+          // refresh local user state (AuthContext already updated)
+          if (auth?.user) setCurrentUser(auth.user.user || auth.user);
+
+          // if user intended to open chat, navigate there
+          if (postLoginAction === "chat") {
+            setPostLoginAction(null);
+            setShowLoginModal(false);
+            navigate("/chat");
+          }
+        }}
+      />
 
       {/* PAGE CONTENT */}
       <div className="content-area">

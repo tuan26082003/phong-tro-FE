@@ -261,80 +261,101 @@ export default function OwnerPayment() {
   return (
     <div>
       <h2>Quản lý thanh toán</h2>
-
-      {/* FILTER BAR */}
+<br></br>
+      {/* FILTER BAR (responsive) */}
       <div
         style={{
           marginBottom: 20,
-          display: "grid",
-          gridTemplateColumns: "120px 150px 150px 150px 150px 150px auto",
+          display: "flex",
+          flexWrap: "wrap",
           gap: 10,
+          alignItems: "center",
         }}
       >
-        <Input
-          placeholder="Booking ID"
-          value={query.bookingId}
-          onChange={(e) => setQuery({ ...query, bookingId: e.target.value })}
-        />
+        <div style={{ flex: "0 0 120px" }}>
+          <Input
+            placeholder="Booking ID"
+            value={query.bookingId}
+            onChange={(e) => setQuery({ ...query, bookingId: e.target.value })}
+            allowClear
+          />
+        </div>
 
-        <Select
-          placeholder="Loại"
-          allowClear
-          value={query.paymentType || undefined}
-          onChange={(v) => setQuery({ ...query, paymentType: v })}
-        >
-          <Select.Option value="DEPOSIT">DEPOSIT</Select.Option>
-          <Select.Option value="MONTHLY">MONTHLY</Select.Option>
-          <Select.Option value="ADVANCE">ADVANCE</Select.Option>
-          <Select.Option value="OTHER">OTHER</Select.Option>
-        </Select>
+        <div style={{ flex: "0 0 150px" }}>
+          <Select
+            placeholder="Loại"
+            allowClear
+            value={query.paymentType || undefined}
+            onChange={(v) => setQuery({ ...query, paymentType: v })}
+            style={{ width: "100%" }}
+          >
+            <Select.Option value="DEPOSIT">DEPOSIT</Select.Option>
+            <Select.Option value="MONTHLY">MONTHLY</Select.Option>
+            <Select.Option value="ADVANCE">ADVANCE</Select.Option>
+            <Select.Option value="OTHER">OTHER</Select.Option>
+          </Select>
+        </div>
 
-        <Select
-          placeholder="Phương thức"
-          allowClear
-          value={query.paymentMethod || undefined}
-          onChange={(v) => setQuery({ ...query, paymentMethod: v })}
-        >
-          <Select.Option value="CASH">CASH</Select.Option>
-          <Select.Option value="BANKING">BANKING</Select.Option>
-          <Select.Option value="MOMO">MOMO</Select.Option>
-          <Select.Option value="CREDIT_CARD">CREDIT_CARD</Select.Option>
-        </Select>
+        <div style={{ flex: "0 0 150px" }}>
+          <Select
+            placeholder="Phương thức"
+            allowClear
+            value={query.paymentMethod || undefined}
+            onChange={(v) => setQuery({ ...query, paymentMethod: v })}
+            style={{ width: "100%" }}
+          >
+            <Select.Option value="CASH">CASH</Select.Option>
+            <Select.Option value="BANKING">BANKING</Select.Option>
+            <Select.Option value="MOMO">MOMO</Select.Option>
+            <Select.Option value="CREDIT_CARD">CREDIT_CARD</Select.Option>
+          </Select>
+        </div>
 
-        <Select
-          placeholder="Trạng thái"
-          allowClear
-          value={query.paymentStatus || undefined}
-          onChange={(v) => setQuery({ ...query, paymentStatus: v })}
-        >
-          <Select.Option value="PENDING">PENDING</Select.Option>
-          <Select.Option value="PAID">PAID</Select.Option>
-          <Select.Option value="FAILED">FAILED</Select.Option>
-          <Select.Option value="REFUND">REFUND</Select.Option>
-        </Select>
+        <div style={{ flex: "0 0 150px" }}>
+          <Select
+            placeholder="Trạng thái"
+            allowClear
+            value={query.paymentStatus || undefined}
+            onChange={(v) => setQuery({ ...query, paymentStatus: v })}
+            style={{ width: "100%" }}
+          >
+            <Select.Option value="PENDING">PENDING</Select.Option>
+            <Select.Option value="PAID">PAID</Select.Option>
+            <Select.Option value="FAILED">FAILED</Select.Option>
+            <Select.Option value="REFUND">REFUND</Select.Option>
+          </Select>
+        </div>
 
-        <DatePicker
-          placeholder="Ngày thanh toán"
-          onChange={(v) =>
-            setQuery({ ...query, paymentDate: v ? v.toISOString() : "" })
-          }
-        />
+        <div style={{ flex: "0 0 170px" }}>
+          <DatePicker
+            placeholder="Ngày thanh toán"
+            onChange={(v) =>
+              setQuery({ ...query, paymentDate: v ? v.toISOString() : "" })
+            }
+            style={{ width: "100%" }}
+          />
+        </div>
 
-        <DatePicker
-          placeholder="Chu kỳ"
-          onChange={(v) =>
-            setQuery({
-              ...query,
-              paymentPeriod: v ? v.format("YYYY-MM-DD") : "",
-            })
-          }
-        />
+        <div style={{ flex: "0 0 170px" }}>
+          <DatePicker
+            placeholder="Chu kỳ"
+            onChange={(v) =>
+              setQuery({
+                ...query,
+                paymentPeriod: v ? v.format("YYYY-MM-DD") : "",
+              })
+            }
+            style={{ width: "100%" }}
+          />
+        </div>
 
-        <Button onClick={resetFilters}>Reset</Button>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 10 }}>
+          <Button onClick={resetFilters}>Reset</Button>
 
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          Thêm khoản
-        </Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+            Thêm khoản
+          </Button>
+        </div>
       </div>
 
       {/* TABLE */}

@@ -309,14 +309,20 @@ export default function Home() {
                 onClick={() => nav(`/search?keyword=${encodeURIComponent(loc.name)}`)}
                 style={{ cursor: "pointer" }}
               >
-                <div style={{ overflow: "hidden", borderRadius: 8 }}>
+                <div className="hot-location-media">
                   <img
+                    className="hot-location-image"
                     src={loc.img}
                     alt={loc.name}
-                    style={{ width: "100%", height: 120, objectFit: "cover" }}
                   />
+
+                  <div className="hot-location-overlay">
+                    <div className="hot-location-label">
+                      <div className="hot-location-overlay-title">{loc.name}</div>
+                    </div>
+                  </div>
                 </div>
-                <div style={{ marginTop: 8, fontWeight: 600 }}>{loc.name}</div>
+                <div className="hot-location-name" style={{ marginTop: 8 }}>{loc.name}</div>
               </div>
             </Col>
           ))}
@@ -326,7 +332,7 @@ export default function Home() {
 
       {/* FEATURED ROOMS */}
       <section className="section featured-rooms">
-        <h2 className="section-title">Phòng trọ</h2>
+        <h2 className="section-title">Danh sách phòng trọ</h2>
 
         <Row gutter={[24, 24]}>
           {rooms.map((room) => (
@@ -365,7 +371,7 @@ export default function Home() {
 
       {/* APARTMENT FEATURED */}
       <section className="section featured-rooms">
-        <h2 className="section-title">Chung cư</h2>
+        <h2 className="section-title">Danh sách chung cư</h2>
         <Row gutter={[24, 24]}>
           {apartments.map((room) => (
             <Col xs={24} sm={12} md={6} key={room.id}>
@@ -385,7 +391,7 @@ export default function Home() {
 
       {/* HOUSE FEATURED */}
       <section className="section featured-rooms">
-        <h2 className="section-title">Nhà nguyên căn</h2>
+        <h2 className="section-title">Danh sách nhà nguyên căn</h2>
         <Row gutter={[24, 24]}>
           {houses.map((room) => (
             <Col xs={24} sm={12} md={6} key={room.id}>

@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Button } from "antd";
 import { EnvironmentOutlined, HomeOutlined, TeamOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import { getImageUrl } from "../utils/imageHelper";
+import { AuthContext } from "../context/AuthContext";
 
 export default function RoomCard({ room = {}, loading = false }) {
   const nav = useNavigate();
+  const auth = useContext(AuthContext);
 
   const imageUrl =
     room.images && room.images.length > 0
@@ -148,7 +150,22 @@ export default function RoomCard({ room = {}, loading = false }) {
                 toast.warning("Không tìm thấy thông tin chủ trọ");
                 return;
               }
+
+              // If not logged in, open the global LoginModal managed by layout
+              const isLoggedIn = !!(auth && auth.user && (auth.user.accessToken || auth.user.token || auth.user.user));
               localStorage.setItem("chatWithUserId", room.ownerId);
+
+              if (!isLoggedIn) {
+                // dispatch event that layouts listen to
+                try {
+                  window.dispatchEvent(new CustomEvent("open-login-modal", { detail: { action: "chat", initialMode: "login" } }));
+                } catch (e) {
+                  // fallback: open /login route
+                  nav("/login");
+                }
+                return;
+              }
+
               nav("/chat");
             }}
           >

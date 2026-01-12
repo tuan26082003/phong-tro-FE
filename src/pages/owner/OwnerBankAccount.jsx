@@ -118,7 +118,12 @@ export default function OwnerBank() {
       setModalOpen(false);
       loadBank();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Có lỗi xảy ra");
+      const status = err.response?.status;
+      if (status && status !== 200) {
+        toast.error(isEdit ? "Cập nhật tài khoản ngân hàng lỗi" : "Tạo tài khoản ngân hàng lỗi");
+      } else {
+        toast.error(err.response?.data?.message || "Có lỗi xảy ra");
+      }
     }
   };
 

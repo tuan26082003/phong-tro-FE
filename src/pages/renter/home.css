@@ -440,6 +440,41 @@ html {
   box-shadow: 0 6px 18px rgba(0,0,0,0.06);
 }
 
+.hot-locations .hot-location-media {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.hot-locations .hot-location-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.45) 60%);
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  pointer-events: none;
+}
+
+.hot-locations .hot-location-label {
+  color: #fff;
+  pointer-events: auto;
+}
+
+.hot-location-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.hot-location-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.9);
+  margin-top: 4px;
+}
 .hot-locations .hot-location-card:hover {
   transform: translateY(-6px);
   box-shadow: 0 14px 30px rgba(2,6,23,0.08);
@@ -454,6 +489,13 @@ html {
   font-weight: 700;
   color: #111827;
   font-size: 15px;
+}
+
+/* overlay title (white) */
+.hot-location-overlay-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
 }
 
 /* slightly larger images on wider screens */

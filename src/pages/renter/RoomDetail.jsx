@@ -22,6 +22,7 @@ import {
   TeamOutlined,
   ArrowLeftOutlined,
   DollarCircleOutlined,
+  CheckOutlined,
 } from "@ant-design/icons";
 import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
@@ -141,6 +142,38 @@ export default function RoomDetail() {
           }
           .custom-carousel-dots {
             bottom: 20px !important;
+          }
+          /* Facilities grid - compact */
+          .facilities-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 12px;
+          }
+
+          .facility-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+          }
+
+          .facility-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #1677ff;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 28px;
+            font-size: 13px;
+          }
+
+          .facility-item > div:last-child { font-size: 13px; color: #222; }
+
+          @media (max-width: 576px) {
+            .facilities-grid { grid-template-columns: 1fr; }
           }
         `}
       </style>
@@ -404,28 +437,7 @@ export default function RoomDetail() {
             </Paragraph>
           </Card>
 
-          <Card style={{ borderRadius: 12 }} bodyStyle={{ padding: 20 }}>
-            <Title level={4} style={{ marginBottom: 12 }}>
-              Tiện ích
-            </Title>
-            {room.facilities && room.facilities.length > 0 ? (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {room.facilities.map((facility, idx) => (
-                  <Tag key={idx} color="blue" style={{ 
-                    fontSize: 14, 
-                    padding: "4px 12px",
-                    marginBottom: 8
-                  }}>
-                    {facility}
-                  </Tag>
-                ))}
-              </div>
-            ) : (
-              <Paragraph style={{ color: "#999" }}>
-                Không có thông tin tiện ích.
-              </Paragraph>
-            )}
-          </Card>
+         
         </Col>
 
         {/* Dịch vụ */}
@@ -455,13 +467,42 @@ export default function RoomDetail() {
                       description={
                         <Text type="secondary">
                           Giá:{" "}
-                          <strong>{item.price?.toLocaleString("vi-VN") || "0"}₫</strong>
+                          <strong>
+                            {item.pricePerUnit?.toLocaleString("vi-VN") || "0"}₫
+                            {item.type === "FIXED"
+                              ? " / 1tháng"
+                              : item.type === "METERED"
+                              ? " / 1 số"
+                              : ""}
+                          </strong>
                         </Text>
                       }
                     />
                   </List.Item>
                 )}
               />
+            )}
+          </Card>
+
+           <Card style={{ borderRadius: 12 }} bodyStyle={{ padding: 20 }}>
+            <Title level={4} style={{ marginBottom: 12 }}>
+              Tiện nghi
+            </Title>
+            {room.facilities && room.facilities.length > 0 ? (
+              <div className="facilities-grid">
+                {room.facilities.map((facility, idx) => (
+                  <div className="facility-item" key={idx}>
+                    <div className="facility-icon">
+                      <CheckOutlined />
+                    </div>
+                    <div style={{ fontSize: 14 }}>{facility}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Paragraph style={{ color: "#999" }}>
+                Không có thông tin tiện ích.
+              </Paragraph>
             )}
           </Card>
         </Col>

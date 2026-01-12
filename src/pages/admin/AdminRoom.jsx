@@ -14,7 +14,6 @@ import {
 } from "antd";
 
 import {
-  PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   UploadOutlined,
@@ -71,7 +70,7 @@ export default function AdminRoom() {
         params.type = query.type;
       }
 
-      const res = await axiosClient.get(API, { params });
+      const res = await axiosClient.get("/api/search/rooms/advanced", { params });
 
       console.log("API Response:", res.data);
       console.log("First room:", res.data.data?.[0]);
@@ -294,10 +293,6 @@ export default function AdminRoom() {
         </Select>
 
         <div style={{ flex: 1 }} />
-
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          Thêm phòng
-        </Button>
       </div>
 
       <Table

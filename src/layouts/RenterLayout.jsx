@@ -43,14 +43,42 @@ export default function RenterLayout() {
     }
   }, [auth?.user]);
 
+  // Listen for global requests to open the login modal (e.g., from RoomCard)
+  useEffect(() => {
+    const handler = (e) => {
+      const detail = e?.detail || {};
+      if (detail.initialMode) setModalInitialMode(detail.initialMode);
+      if (detail.action) setPostLoginAction(detail.action);
+      setShowLoginModal(true);
+    };
+
+    window.addEventListener("open-login-modal", handler);
+    return () => window.removeEventListener("open-login-modal", handler);
+  }, []);
+
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-    localStorage.removeItem("role");
+    // prefer AuthContext.logout which clears many variants and redirects
+    if (auth && typeof auth.logout === 'function') {
+      auth.logout();
+      return;
+    }
+
+    // fallback: remove common storage keys
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userData');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('role');
+    } catch (e) {
+      console.warn('Error clearing localStorage during logout', e);
+    }
 
     setCurrentUser(null);
-    navigate("/");
+    navigate('/');
   };
 
   const getInitials = (name) => {
@@ -344,11 +372,24 @@ export default function RenterLayout() {
           // refresh local user state (AuthContext already updated)
           if (auth?.user) setCurrentUser(auth.user.user || auth.user);
 
-          // if user intended to open chat, navigate there
+          // handle post-login actions (chat, booking, etc.)
           if (postLoginAction === "chat") {
             setPostLoginAction(null);
             setShowLoginModal(false);
             navigate("/chat");
+            return;
+          }
+
+          if (postLoginAction === "booking") {
+            setPostLoginAction(null);
+            setShowLoginModal(false);
+            try {
+              window.dispatchEvent(new CustomEvent("after-login-action", { detail: { action: "booking" } }));
+            } catch (e) {
+              // fallback: reload page to let page detect auth
+              window.location.reload();
+            }
+            return;
           }
         }}
       />

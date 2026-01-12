@@ -9,6 +9,7 @@ import {
   Input,
   Select,
 } from "antd";
+import { toast } from "react-toastify";
 import { CheckOutlined, CloseOutlined, EyeOutlined } from "@ant-design/icons";
 import axiosClient from "../../api/axiosClient";
 
@@ -74,16 +75,20 @@ export default function HandleOwner() {
     if (!selectedRequest) return;
 
     try {
-      await axiosClient.put("/api/owner-requests/handle", {
+      const res = await axiosClient.put("/api/owner-requests/handle", {
         requestId: selectedRequest.id,
         status: handleType,
       });
 
-      message.success(
-        handleType === "APPROVED"
-          ? "Đã phê duyệt yêu cầu"
-          : "Đã từ chối yêu cầu"
-      );
+      // prefer server message if provided
+      const serverMsg = res?.data?.message;
+      if (handleType === "APPROVED") {
+        message.success(serverMsg || "Đã phê duyệt yêu cầu");
+        toast.success(serverMsg || "Phê duyệt yêu cầu thành công");
+      } else {
+        message.success(serverMsg || "Đã từ chối yêu cầu");
+        toast.success(serverMsg || "Từ chối yêu cầu thành công");
+      }
 
       setModalOpen(false);
       loadRequests();
@@ -107,27 +112,37 @@ export default function HandleOwner() {
     {
       title: "Tên người dùng",
       dataIndex: "userName",
-      render: (name) => <strong>{name}</strong>,
+      render: (name) => <strong style={{ display: 'inline-block', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</strong>,
+      ellipsis: true,
     },
     {
       title: "Email",
       dataIndex: "email",
       render: (email) => (
-        <span style={{ fontSize: 13, color: "#666" }}>{email}</span>
+        <span title={email} style={{ fontSize: 13, color: "#666", display: 'inline-block', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</span>
       ),
+      ellipsis: true,
     },
     {
       title: "Số điện thoại",
       dataIndex: "phoneNumber",
+      ellipsis: true,
     },
     {
       title: "CCCD",
       dataIndex: "citizenId",
+      ellipsis: true,
     },
     {
       title: "Lý do",
       dataIndex: "reason",
-      render: (text) => text || <span style={{ color: "#999" }}>N/A</span>,
+      render: (text) => (
+        text ? (
+          <div title={text} style={{ maxWidth: 280, whiteSpace: 'normal', wordBreak: 'break-word', color: '#333' }}>{text}</div>
+        ) : (
+          <span style={{ color: "#999" }}>N/A</span>
+        )
+      ),
     },
     {
       title: "Trạng thái",
@@ -145,17 +160,20 @@ export default function HandleOwner() {
     {
       title: "Ngày tạo",
       dataIndex: "createdAt",
-      render: (date) => new Date(date).toLocaleString("vi-VN"),
+      render: (date) => (date ? new Date(date).toLocaleString("vi-VN") : '-'),
+      width: 160,
     },
     {
       title: "Hành động",
+      width: 160,
       render: (record) => (
-        <Space>
-          {record.status === "PENDING" && (
+        <div style={{ whiteSpace: 'nowrap', display: 'flex', gap: 8, alignItems: 'center' }}>
+          {record.status === "PENDING" ? (
             <>
               <Button
                 type="text"
-                style={{ color: "green" }}
+                size="small"
+                style={{ color: "green", padding: '4px 8px' }}
                 icon={<CheckOutlined />}
                 onClick={() => openHandleModal(record, "APPROVED")}
               >
@@ -163,29 +181,32 @@ export default function HandleOwner() {
               </Button>
               <Button
                 type="text"
+                size="small"
                 danger
+                style={{ padding: '4px 8px' }}
                 icon={<CloseOutlined />}
                 onClick={() => openHandleModal(record, "REJECTED")}
               >
                 Từ chối
               </Button>
             </>
-          )}
-          {record.status !== "PENDING" && (
+          ) : (
             <span style={{ color: "#999" }}>Đã xử lý</span>
           )}
-        </Space>
+        </div>
       ),
     },
   ];
 
   return (
-    <div>
+    <div style={{ padding: 16 }}>
       <div
         style={{
           display: "flex",
           gap: 10,
           marginBottom: 16,
+          alignItems: 'center',
+          justifyContent: 'space-between'
         }}
       >
         <Select
@@ -202,22 +223,27 @@ export default function HandleOwner() {
           <Select.Option value="APPROVED">Đã duyệt</Select.Option>
           <Select.Option value="REJECTED">Đã từ chối</Select.Option>
         </Select>
+        <div style={{ marginLeft: 'auto', color: '#666', fontSize: 13 }}>{pagination.total ? `Tổng: ${pagination.total}` : ''}</div>
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={requests}
-        rowKey="id"
-        bordered
-        loading={loading}
-        pagination={{
-          current: pagination.page + 1,
-          pageSize: pagination.size,
-          total: pagination.total,
-          onChange: (p) => setPagination({ ...pagination, page: p - 1 }),
-          style: { textAlign: "center", marginTop: 16 },
-        }}
-      />
+      <div style={{ background: '#fff', borderRadius: 8, padding: 12 }}>
+        <Table
+          columns={columns}
+          dataSource={requests}
+          rowKey="id"
+          bordered
+          loading={loading}
+          scroll={{ x: 1100 }}
+          pagination={{
+            current: pagination.page + 1,
+            pageSize: pagination.size,
+            total: pagination.total,
+            onChange: (p) => setPagination({ ...pagination, page: p - 1 }),
+            style: { textAlign: "center", marginTop: 16 },
+          }}
+          locale={{ emptyText: 'Không có yêu cầu' }}
+        />
+      </div>
 
       <Modal
         open={modalOpen}
@@ -231,29 +257,25 @@ export default function HandleOwner() {
         okText={handleType === "APPROVED" ? "Phê duyệt" : "Từ chối"}
         okType={handleType === "APPROVED" ? "primary" : "danger"}
       >
-        <div>
-          <p>
-            <strong>User ID:</strong> {selectedRequest?.userId}
-          </p>
-          <p>
-            <strong>Tên người dùng:</strong> {selectedRequest?.userName}
-          </p>
-          <p>
-            <strong>Email:</strong> {selectedRequest?.email}
-          </p>
-          <p>
-            <strong>Số điện thoại:</strong> {selectedRequest?.phoneNumber}
-          </p>
-          <p>
-            <strong>CCCD:</strong> {selectedRequest?.citizenId}
-          </p>
-          <p>
-            <strong>Lý do yêu cầu:</strong>{" "}
-            {selectedRequest?.reason || "Không có"}
-          </p>
-          <p style={{ marginTop: 16, color: "#666" }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <p><strong>User ID:</strong> {selectedRequest?.userId || '-'}</p>
+            <p><strong>Tên người dùng:</strong> {selectedRequest?.userName || '-'}</p>
+            <p><strong>Email:</strong> <span style={{ color: '#444' }}>{selectedRequest?.email || '-'}</span></p>
+          </div>
+          <div>
+            <p><strong>Số điện thoại:</strong> {selectedRequest?.phoneNumber || '-'}</p>
+            <p><strong>CCCD:</strong> {selectedRequest?.citizenId || '-'}</p>
+          </div>
+
+          <div style={{ gridColumn: '1 / -1' }}>
+            <p><strong>Lý do yêu cầu:</strong></p>
+            <div style={{ background: '#fafafa', padding: 10, borderRadius: 6, color: '#333', maxHeight: 140, overflow: 'auto', whiteSpace: 'pre-wrap' }}>{selectedRequest?.reason || 'Không có'}</div>
+          </div>
+
+          <div style={{ gridColumn: '1 / -1', marginTop: 8, color: '#666' }}>
             Bạn có chắc chắn muốn {handleType === "APPROVED" ? "phê duyệt" : "từ chối"} yêu cầu này?
-          </p>
+          </div>
         </div>
       </Modal>
     </div>

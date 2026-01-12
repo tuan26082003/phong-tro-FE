@@ -141,7 +141,7 @@ export default function OwnerUser() {
 
   const handleDelete = async () => {
     try {
-      await axiosClient.delete(`${API}/${deleteData.id}`);
+      await axiosClient.delete(`/api/owner-requests/${deleteData.id}`);
       message.success("Xoá người dùng thành công");
       setModalDeleteOpen(false);
       loadUsers();

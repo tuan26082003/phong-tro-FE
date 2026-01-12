@@ -48,11 +48,39 @@ export default function OwnerRooms() {
   const [fileList, setFileList] = useState([]);
 
   const logAxiosError = (err, msg) => {
+    console.error("Axios error:", err);
+    let text = msg || "Lỗi";
+
     if (err?.response) {
-      message.error(msg || err.response.data.message || "Lỗi");
+      const data = err.response.data;
+      if (typeof data === "string") {
+        text = data;
+      } else if (data && typeof data === "object") {
+        if (typeof data.message === "string") {
+          text = data.message;
+        } else if (data.message) {
+          try {
+            text = JSON.stringify(data.message);
+          } catch (e) {
+            text = String(data.message);
+          }
+        } else {
+          try {
+            text = JSON.stringify(data);
+          } catch (e) {
+            text = String(data);
+          }
+        }
+      } else {
+        text = String(data);
+      }
+    } else if (err?.message) {
+      text = err.message;
     } else {
-      message.error("Không thể kết nối server");
+      text = "Không thể kết nối server";
     }
+
+    message.error(text);
   };
 
   const loadRooms = async () => {

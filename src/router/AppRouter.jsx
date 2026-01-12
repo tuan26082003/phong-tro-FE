@@ -79,14 +79,7 @@ export default function AppRouter() {
             }
           />
 
-          <Route
-            path="/booking"
-            element={
-              <RenterPrivateRoute>
-                <Booking />
-              </RenterPrivateRoute>
-            }
-          />
+          <Route path="/booking" element={<Booking />} />
 
           <Route
             path="/booking-list"

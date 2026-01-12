@@ -1,6 +1,6 @@
 // src/pages/Booking.jsx
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Card,
@@ -19,6 +19,7 @@ import {
 import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
 import { getImageUrl } from "../../utils/imageHelper";
+import { AuthContext } from "../../context/AuthContext";
 
 const { Title, Text } = Typography;
 
@@ -26,21 +27,24 @@ export default function Booking() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const auth = useContext(AuthContext);
+
   const room = location.state?.room || null;
 
   const [loading, setLoading] = useState(false);
+  const createBooking = useCallback(async () => {
+    if (!room) return;
+    const isLoggedIn = !!(auth && auth.user && (auth.user.accessToken || auth.user.token || auth.user.user));
 
-  if (!room)
-    return (
-      <div style={{ padding: 40, textAlign: "center" }}>
-        <Title level={4}>Không có thông tin phòng</Title>
-        <Button type="primary" onClick={() => navigate("/rooms")}>
-          Quay lại danh sách
-        </Button>
-      </div>
-    );
+    if (!isLoggedIn) {
+      try {
+        window.dispatchEvent(new CustomEvent("open-login-modal", { detail: { action: "booking", initialMode: "login" } }));
+      } catch (e) {
+        navigate('/login');
+      }
+      return;
+    }
 
-  const createBooking = async () => {
     try {
       setLoading(true);
 
@@ -64,7 +68,30 @@ export default function Booking() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [room, auth, navigate]);
+
+  // listen for post-login action to resume booking
+  useEffect(() => {
+    const handler = (e) => {
+      const action = e?.detail?.action;
+      if (action === "booking") {
+        createBooking();
+      }
+    };
+
+    window.addEventListener("after-login-action", handler);
+    return () => window.removeEventListener("after-login-action", handler);
+  }, [createBooking]);
+
+  if (!room)
+    return (
+      <div style={{ padding: 40, textAlign: "center" }}>
+        <Title level={4}>Không có thông tin phòng</Title>
+        <Button type="primary" onClick={() => navigate("/rooms")}>
+          Quay lại danh sách
+        </Button>
+      </div>
+    );
 
   return (
     <div

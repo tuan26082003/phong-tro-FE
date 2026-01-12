@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // LOGIN API
-  const login = async (payload, options = { redirect: true }) => {
+  const login = async (payload, options = { redirect: true, suppressErrorToast: false }) => {
     try {
       const res = await axios.post(
         "http://localhost:8080/auth/login", // đổi URL API nếu cần
@@ -25,8 +25,9 @@ export const AuthProvider = ({ children }) => {
 
       // Nếu backend trả dạng { status, message, ... } mà status >= 400
       if (data.status >= 400) {
-        toast.error(data.message || "Đăng nhập thất bại");
-        return null;
+        if (!options.suppressErrorToast) toast.error(data.message || "Đăng nhập thất bại");
+        // return the raw response so callers can inspect details if needed
+        return { userData: null, raw: data };
       }
 
       const userData = {
@@ -66,7 +67,7 @@ export const AuthProvider = ({ children }) => {
       return { userData, raw: data };
     } catch (err) {
       console.error(err);
-      toast.error("Không thể kết nối server");
+      if (!options.suppressErrorToast) toast.error("Không thể kết nối server");
       return null;
     }
   };

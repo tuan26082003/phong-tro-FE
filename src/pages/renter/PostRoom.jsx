@@ -19,7 +19,6 @@ import {
 } from "@ant-design/icons";
 import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
-import heroImg from "../../assets/tro1.jpg";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -312,99 +311,91 @@ export default function PostRoom() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#fff",
-        padding: "40px 20px",
+        background: "#f5f7fa",
+        padding: "60px 20px",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 1100, display: "flex", gap: 40, alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ flex: "0 0 52%", display: "flex", alignItems: "center", justifyContent: "flex-start" }}>
-          <img src={heroImg} alt="hero" style={{ width: "100%", maxWidth: 460, height: "auto", objectFit: "contain" }} />
-        </div>
-
-        <div style={{ flex: "0 0 44%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Card
+      <Card
+        style={{
+          maxWidth: 550,
+          width: "100%",
+          borderRadius: 12,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+          border: "1px solid #e8eaed",
+        }}
+      >
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <div
             style={{
-              width: "100%",
-              borderRadius: 12,
-              boxShadow: "0 4px 18px rgba(0,0,0,0.06)",
-              border: "1px solid #e8eaed",
-              padding: 18,
+              width: 64,
+              height: 64,
+              margin: "0 auto 16px",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #2196F3 0%, #1976D2 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            <div style={{ textAlign: "center", marginBottom: 20 }}>
-              <div
-                style={{
-                  width: 64,
-                  height: 64,
-                  margin: "0 auto 12px",
-                  borderRadius: "50%",
-                  background: "linear-gradient(135deg, #2196F3 0%, #1976D2 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <HomeOutlined
-                  style={{
-                    fontSize: 32,
-                    color: "#fff",
-                  }}
-                />
-              </div>
-              <Title level={2} style={{ margin: 0, color: "#1a1a1a", fontSize: 24 }}>
-                Đăng ký làm Chủ trọ
-              </Title>
-              <Text type="secondary" style={{ fontSize: 14, display: "block", marginTop: 6 }}>
-                {currentUser
-                  ? "Hoàn tất thông tin để gửi yêu cầu đến quản trị viên"
-                  : "Đăng nhập để bắt đầu trở thành chủ trọ"}
+            <HomeOutlined
+              style={{
+                fontSize: 32,
+                color: "#fff",
+              }}
+            />
+          </div>
+          <Title level={2} style={{ margin: 0, color: "#1a1a1a", fontSize: 28 }}>
+            Đăng ký làm Chủ trọ
+          </Title>
+          <Text type="secondary" style={{ fontSize: 15, display: "block", marginTop: 8 }}>
+            {currentUser
+              ? "Hoàn tất thông tin để gửi yêu cầu đến quản trị viên"
+              : "Đăng nhập để bắt đầu trở thành chủ trọ"}
+          </Text>
+        </div>
+
+        {currentUser ? (
+          <>
+            {registerFormContent}
+            <div
+              style={{
+                marginTop: 24,
+                padding: 16,
+                background: "#e3f2fd",
+                borderRadius: 8,
+                borderLeft: "4px solid #2196F3",
+              }}
+            >
+              <Text style={{ fontSize: 13, color: "#424242", lineHeight: 1.6 }}>
+                <strong style={{ color: "#1976D2" }}>💡 Lưu ý:</strong> Sau khi
+                gửi yêu cầu, quản trị viên sẽ xem xét và phê duyệt trong vòng
+                24-48 giờ. Bạn sẽ nhận được email thông báo kết quả.
               </Text>
             </div>
-
-            {currentUser ? (
-              <>
-                {registerFormContent}
-                <div
-                  style={{
-                    marginTop: 16,
-                    padding: 12,
-                    background: "#e3f2fd",
-                    borderRadius: 8,
-                    borderLeft: "4px solid #2196F3",
-                  }}
-                >
-                  <Text style={{ fontSize: 13, color: "#424242", lineHeight: 1.6 }}>
-                    <strong style={{ color: "#1976D2" }}>💡 Lưu ý:</strong> Sau khi
-                    gửi yêu cầu, quản trị viên sẽ xem xét và phê duyệt trong vòng
-                    24-48 giờ. Bạn sẽ nhận được email thông báo kết quả.
-                  </Text>
-                </div>
-              </>
-            ) : (
-              <Tabs
-                activeKey={activeTab}
-                onChange={setActiveTab}
-                items={[
-                  {
-                    key: "login",
-                    label: "Đăng nhập",
-                    children: loginFormContent,
-                  },
-                  {
-                    key: "register",
-                    label: "Đăng ký làm chủ trọ",
-                    children: registerFormContent,
-                    disabled: !currentUser,
-                  },
-                ]}
-              />
-            )}
-          </Card>
-        </div>
-      </div>
+          </>
+        ) : (
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            items={[
+              {
+                key: "login",
+                label: "Đăng nhập",
+                children: loginFormContent,
+              },
+              {
+                key: "register",
+                label: "Đăng ký làm chủ trọ",
+                children: registerFormContent,
+                disabled: !currentUser,
+              },
+            ]}
+          />
+        )}
+      </Card>
     </div>
   );
 }

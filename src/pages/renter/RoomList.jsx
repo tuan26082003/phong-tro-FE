@@ -1,6 +1,6 @@
 // src/pages/RoomList.jsx
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Row,
@@ -19,6 +19,7 @@ import { SearchOutlined, EnvironmentOutlined, HomeOutlined, TeamOutlined } from 
 import axiosClient from "../../api/axiosClient";
 import { toast } from "react-toastify";
 import { getImageUrl } from "../../utils/imageHelper";
+import { AuthContext } from "../../context/AuthContext";
 
 const API = "/api/search/rooms/advanced";
 const { Option } = Select;
@@ -27,6 +28,7 @@ const { Title, Paragraph, Text } = Typography;
 export default function RoomList() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
 
   // Add pulse animation CSS
   const styleTag = document.createElement('style');
@@ -49,9 +51,8 @@ export default function RoomList() {
   const [loading, setLoading] = useState(false);
 
   const [q, setQ] = useState("");
-  const [minPrice, setMinPrice] = useState();
-  const [maxPrice, setMaxPrice] = useState();
   const [minArea, setMinArea] = useState();
+  const [maxArea, setMaxArea] = useState();
   const [sort, setSort] = useState("");
   const [status, setStatus] = useState("AVAILABLE");
   const [pagination, setPagination] = useState({
@@ -82,16 +83,14 @@ export default function RoomList() {
     const params = new URLSearchParams(location.search);
 
     const kwParam = params.get("keyword") || params.get("q") || "";
-    const minPriceParam = params.get("minPrice");
-    const maxPriceParam = params.get("maxPrice");
     const minAreaParam = params.get("minArea");
+    const maxAreaParam = params.get("maxArea");
     const sortParam = params.get("sort") || "";
     const pageParam = params.get("page");
 
     setQ(kwParam);
-    setMinPrice(minPriceParam ? Number(minPriceParam) : undefined);
-    setMaxPrice(maxPriceParam ? Number(maxPriceParam) : undefined);
     setMinArea(minAreaParam ? Number(minAreaParam) : undefined);
+    setMaxArea(maxAreaParam ? Number(maxAreaParam) : undefined);
     setSort(sortParam);
     setStatus(params.get("status") || "AVAILABLE");
     setPagination((prev) => ({
@@ -105,9 +104,8 @@ export default function RoomList() {
       setLoading(true);
       const qs = new URLSearchParams(location.search);
       const qsQ = qs.get("keyword") || qs.get("q") || q;
-      const qsMinPrice = qs.get("minPrice") ? Number(qs.get("minPrice")) : minPrice;
-      const qsMaxPrice = qs.get("maxPrice") ? Number(qs.get("maxPrice")) : maxPrice;
       const qsMinArea = qs.get("minArea") ? Number(qs.get("minArea")) : minArea;
+      const qsMaxArea = qs.get("maxArea") ? Number(qs.get("maxArea")) : maxArea;
       const qsSort = qs.get("sort") || sort;
       const qsPage = qs.get("page") ? Number(qs.get("page")) - 1 : pagination.page;
 
@@ -120,9 +118,8 @@ export default function RoomList() {
       if (qsQ) {
         params.keyword = qsQ;
       }
-      if (qsMinPrice) params.minPrice = qsMinPrice;
-      if (qsMaxPrice) params.maxPrice = qsMaxPrice;
       if (qsMinArea) params.minArea = qsMinArea;
+      if (qsMaxArea) params.maxArea = qsMaxArea;
       if (qsSort) params.sort = qsSort;
 
       console.debug("[RoomList] loadRooms params:", params, "location.search:", location.search);
@@ -154,14 +151,13 @@ export default function RoomList() {
 
   useEffect(() => {
     loadRooms();
-  }, [pagination.page, pagination.size, q, minPrice, maxPrice, minArea, sort]);
+  }, [pagination.page, pagination.size, q, minArea, maxArea, sort]);
 
   const applyFilter = () => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
-    if (minPrice) params.set("minPrice", String(minPrice));
-    if (maxPrice) params.set("maxPrice", String(maxPrice));
     if (minArea) params.set("minArea", String(minArea));
+    if (maxArea) params.set("maxArea", String(maxArea));
     if (sort) params.set("sort", sort);
     params.set("page", "1");
 
@@ -288,28 +284,19 @@ export default function RoomList() {
           <Col xs={12} md={4}>
             <InputNumber
               style={{ width: "100%" }}
-              placeholder="Giá từ"
-              min={0}
-              value={minPrice}
-              onChange={setMinPrice}
-            />
-          </Col>
-          <Col xs={12} md={4}>
-            <InputNumber
-              style={{ width: "100%" }}
-              placeholder="Giá đến"
-              min={0}
-              value={maxPrice}
-              onChange={setMaxPrice}
-            />
-          </Col>
-          <Col xs={12} md={4}>
-            <InputNumber
-              style={{ width: "100%" }}
-              placeholder="DT tối thiểu (m²)"
+              placeholder="DT từ (m²)"
               min={0}
               value={minArea}
               onChange={setMinArea}
+            />
+          </Col>
+          <Col xs={12} md={4}>
+            <InputNumber
+              style={{ width: "100%" }}
+              placeholder="DT đến (m²)"
+              min={0}
+              value={maxArea}
+              onChange={setMaxArea}
             />
           </Col>
           <Col xs={12} md={4}>
@@ -456,6 +443,18 @@ export default function RoomList() {
                       toast.warning("Không tìm thấy thông tin chủ trọ");
                       return;
                     }
+                    // If not logged in, trigger layout to open LoginModal first
+                    if (!user) {
+                      localStorage.setItem("chatWithUserId", room.ownerId);
+                      window.dispatchEvent(
+                        new CustomEvent("open-login-modal", {
+                          detail: { action: "chat", initialMode: "login" },
+                        })
+                      );
+                      return;
+                    }
+
+                    // Logged in → proceed to chat
                     localStorage.setItem("chatWithUserId", room.ownerId);
                     navigate(`/chat`);
                   }}

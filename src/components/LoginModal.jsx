@@ -91,7 +91,7 @@ export default function LoginModal({ visible, onClose, initialMode, onLoginSucce
       deviceToken: "",
       versionApp: "1.0",
     };
-    const result = await login(payload, { redirect: false });
+    const result = await login(payload, { redirect: false, suppressErrorToast: true });
     setLoading(false);
 
     // result is either null or { userData, raw }
@@ -102,15 +102,42 @@ export default function LoginModal({ visible, onClose, initialMode, onLoginSucce
         const userData = result.userData || result.raw || {};
         const roleName = userData.role || userData.roleName || (userData.user && userData.user.roleName) || null;
 
-        if (initialMode === "postroom") {
-          setMode("postroom");
-          return;
-        }
-
-        // prefer to update context and SPA-navigate
+        // prefer to update context and SPA-navigate, but handle postroom flow specially
         if (setAuth) {
           setAuth(userData, { persist: true, redirect: false });
           toast.success("Đăng nhập thành công");
+
+          // If modal was opened to continue owner registration, keep it open and switch to the postroom step
+          if (initialMode === "postroom") {
+            setCurrentUser(userData.user || userData);
+            setMode("postroom");
+            if (onLoginSuccess) onLoginSuccess();
+            return;
+          }
+
+          // If parent provided onLoginSuccess, call it but still perform role-based navigation for admins/owners.
+          if (onLoginSuccess) {
+            try {
+              onLoginSuccess();
+            } catch (e) {
+              console.warn('onLoginSuccess threw', e);
+            }
+            onClose?.();
+
+            if (roleName === 'ADMIN' || roleName === 'ROLE_ADMIN') {
+              navigate('/admin/dashboard');
+              return;
+            }
+            if (roleName === 'OWNER' || roleName === 'ROLE_OWNER') {
+              navigate('/owner/dashboard');
+              return;
+            }
+
+            // otherwise let the parent stay in control
+            return;
+          }
+
+          // Fallback: close modal and navigate according to role
           onClose();
           if (roleName === 'ADMIN' || roleName === 'ROLE_ADMIN') {
             navigate('/admin/dashboard');
@@ -119,11 +146,10 @@ export default function LoginModal({ visible, onClose, initialMode, onLoginSucce
           } else {
             navigate('/');
           }
-          if (onLoginSuccess) onLoginSuccess();
           return;
         }
 
-        // fallback: keep existing behavior
+        // fallback: persist to storage and handle postroom flow
         toast.success("Đăng nhập thành công");
         try {
           const u = localStorage.getItem("user");
@@ -132,15 +158,40 @@ export default function LoginModal({ visible, onClose, initialMode, onLoginSucce
             setCurrentUser(parsed.user || null);
           }
         } catch (e) {
-          setCurrentUser(null);
+          setCurrentUser(userData.user || null);
         }
 
-        if (onLoginSuccess) onLoginSuccess();
-        onClose();
+        if (initialMode === "postroom") {
+          setMode("postroom");
+          if (onLoginSuccess) onLoginSuccess();
+          return;
+        }
+
+        if (onLoginSuccess) {
+          try {
+            onLoginSuccess();
+          } catch (e) {
+            console.warn('onLoginSuccess threw', e);
+          }
+          onClose?.();
+
+          if (roleName === 'ADMIN' || roleName === 'ROLE_ADMIN') {
+            navigate('/admin/dashboard');
+            return;
+          }
+          if (roleName === 'OWNER' || roleName === 'ROLE_OWNER') {
+            navigate('/owner/dashboard');
+            return;
+          }
+
+          return;
+        } else {
+          onClose();
+        }
         return;
       }
       // non-200 response from server
-      toast.error(result.raw.message || "Đăng nhập không thành công");
+      toast.error("Đăng nhập không thành công");
       setMode("login");
       return;
     }
@@ -295,8 +346,39 @@ const googleLogin = useGoogleLogin({
         // persist to localStorage but don't redirect inside setAuth
         setAuth(userData, { persist: true, redirect: false });
         toast.success('Đăng nhập thành công');
+
+        // If opened for owner registration, keep modal open and switch to postroom
+        if (initialMode === 'postroom') {
+          setCurrentUser(userData.user || userData);
+          setMode('postroom');
+          if (onLoginSuccess) onLoginSuccess();
+          return;
+        }
+
+        // If parent provided onLoginSuccess, call it but still perform role-based navigation for admins/owners.
+        if (onLoginSuccess) {
+          try {
+            onLoginSuccess();
+          } catch (e) {
+            console.warn('onLoginSuccess threw', e);
+          }
+          onClose?.();
+
+          if (roleName === 'ADMIN' || roleName === 'ROLE_ADMIN') {
+            navigate('/admin/dashboard');
+            return;
+          }
+          if (roleName === 'OWNER' || roleName === 'ROLE_OWNER') {
+            navigate('/owner/dashboard');
+            return;
+          }
+
+          // otherwise let the parent stay in control
+          return;
+        }
+
+        // fallback: close modal and perform navigation
         onClose?.();
-        // navigate based on role using React Router for smooth UX
         if (roleName === 'ADMIN' || roleName === 'ROLE_ADMIN') {
           navigate('/admin/dashboard');
         } else if (roleName === 'OWNER' || roleName === 'ROLE_OWNER') {
@@ -304,16 +386,41 @@ const googleLogin = useGoogleLogin({
         } else {
           navigate('/');
         }
-        if (onLoginSuccess) onLoginSuccess();
         return;
       }
 
-      // fallback: persist and perform a SPA navigation
+      // fallback: persist and perform a SPA navigation (or continue postroom flow)
       localStorage.setItem('token', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(userData));
       toast.success('Đăng nhập thành công');
-      onClose?.();
+      if (initialMode === 'postroom') {
+        setCurrentUser(userData.user || userData);
+        setMode('postroom');
+        if (onLoginSuccess) onLoginSuccess();
+        return;
+      }
+      if (onLoginSuccess) {
+        try {
+          onLoginSuccess();
+        } catch (e) {
+          console.warn('onLoginSuccess threw', e);
+        }
+        onClose?.();
+
+        if (roleName === 'ADMIN' || roleName === 'ROLE_ADMIN') {
+          navigate('/admin/dashboard');
+          return;
+        }
+        if (roleName === 'OWNER' || roleName === 'ROLE_OWNER') {
+          navigate('/owner/dashboard');
+          return;
+        }
+
+        return;
+      } else {
+        onClose?.();
+      }
       if (roleName === 'ADMIN' || roleName === 'ROLE_ADMIN') {
         navigate('/admin/dashboard');
       } else if (roleName === 'OWNER' || roleName === 'ROLE_OWNER') {

@@ -44,6 +44,7 @@ export default function AdminPayment() {
   const [updateId, setUpdateId] = useState(null);
 
   const [form] = Form.useForm();
+  const [updateForm] = Form.useForm();
 
   // =====================================================
   // LOG ERROR
@@ -168,23 +169,54 @@ export default function AdminPayment() {
   // =====================================================
   const openUpdateStatus = (id) => {
     setUpdateId(id);
-    setModalUpdateOpen(true);
+    // load payment details to prefill date range
+    (async () => {
+      try {
+        const res = await axiosClient.get(`${API}/${id}`);
+        const d = res.data.data || {};
+        if (d.startDate || d.endDate) {
+          updateForm.setFieldsValue({
+            dateRange: [
+              d.startDate ? dayjs(d.startDate) : null,
+              d.endDate ? dayjs(d.endDate) : null,
+            ],
+          });
+        } else {
+          updateForm.resetFields();
+        }
+      } catch (err) {
+        // ignore prefilling errors
+        updateForm.resetFields();
+      }
+
+      setModalUpdateOpen(true);
+    })();
   };
 
   const submitUpdateStatus = async (status) => {
     try {
-      const res = await axiosClient.put(`${API}/${updateId}`, {
-        paymentStatus: status,
-      });
+      // If marking as PAID, require date range
+      let payload = { paymentStatus: status };
 
-      // Backend trả về {code: 201, data: {...}, message: "..."}
-      // Axios chỉ throw error khi HTTP status >= 400, nên không cần check thêm
-      
-      const message = res.data.message || "Cập nhật trạng thái thành công";
-      toast.success(message);
+      if (status === "PAID") {
+        await updateForm.validateFields();
+        const range = updateForm.getFieldValue("dateRange") || [];
+        if (range && range.length === 2 && range[0] && range[1]) {
+          payload.startDate = range[0].format("YYYY-MM-DD");
+          payload.endDate = range[1].format("YYYY-MM-DD");
+        }
+      }
+
+      const res = await axiosClient.put(`${API}/${updateId}`, payload);
+
+      const messageText = res.data.message || "Cập nhật trạng thái thành công";
+      toast.success(messageText);
       setModalUpdateOpen(false);
+      updateForm.resetFields();
       loadPayments();
     } catch (err) {
+      if (err && err.errorFields) return; // validation errors
+
       const errorMessage = err.response?.data?.message || "Không thể cập nhật trạng thái";
       toast.error(errorMessage);
     }
@@ -205,11 +237,7 @@ export default function AdminPayment() {
     },
     { title: "Phương thức", dataIndex: "paymentMethod" },
     { title: "Trạng thái", dataIndex: "paymentStatus" },
-    {
-      title: "Ngày thanh toán",
-      dataIndex: "paymentDate",
-      render: (v) => v && dayjs(v).format("DD/MM/YYYY HH:mm"),
-    },
+   
     { title: "Chu kỳ", dataIndex: "paymentPeriod", render: (v) => v || "---" },
     {
       title: "Hành động",
@@ -234,79 +262,100 @@ export default function AdminPayment() {
     <div>
       <h2>Quản lý thanh toán</h2>
 
-      {/* FILTER BAR */}
+      {/* FILTER BAR (responsive) */}
       <div
         style={{
           marginBottom: 20,
-          display: "grid",
-          gridTemplateColumns: "120px 150px 150px 150px 150px 150px auto",
+          display: "flex",
+          flexWrap: "wrap",
           gap: 10,
+          alignItems: "center",
         }}
       >
-        <Input
-          placeholder="Booking ID"
-          value={query.bookingId}
-          onChange={(e) => setQuery({ ...query, bookingId: e.target.value })}
-        />
+        <div style={{ flex: "0 0 120px" }}>
+          <Input
+            placeholder="Booking ID"
+            value={query.bookingId}
+            onChange={(e) => setQuery({ ...query, bookingId: e.target.value })}
+            allowClear
+          />
+        </div>
 
-        <Select
-          placeholder="Loại"
-          allowClear
-          value={query.paymentType || undefined}
-          onChange={(v) => setQuery({ ...query, paymentType: v })}
-        >
-          <Select.Option value="DEPOSIT">DEPOSIT</Select.Option>
-          <Select.Option value="MONTHLY">MONTHLY</Select.Option>
-          <Select.Option value="ADVANCE">ADVANCE</Select.Option>
-          <Select.Option value="OTHER">OTHER</Select.Option>
-        </Select>
+        <div style={{ flex: "0 0 150px" }}>
+          <Select
+            placeholder="Loại"
+            allowClear
+            value={query.paymentType || undefined}
+            onChange={(v) => setQuery({ ...query, paymentType: v })}
+            style={{ width: "100%" }}
+          >
+            <Select.Option value="DEPOSIT">DEPOSIT</Select.Option>
+            <Select.Option value="MONTHLY">MONTHLY</Select.Option>
+            <Select.Option value="ADVANCE">ADVANCE</Select.Option>
+            <Select.Option value="OTHER">OTHER</Select.Option>
+          </Select>
+        </div>
 
-        <Select
-          placeholder="Phương thức"
-          allowClear
-          value={query.paymentMethod || undefined}
-          onChange={(v) => setQuery({ ...query, paymentMethod: v })}
-        >
-          <Select.Option value="CASH">CASH</Select.Option>
-          <Select.Option value="BANKING">BANKING</Select.Option>
-          <Select.Option value="MOMO">MOMO</Select.Option>
-          <Select.Option value="CREDIT_CARD">CREDIT_CARD</Select.Option>
-        </Select>
+        <div style={{ flex: "0 0 150px" }}>
+          <Select
+            placeholder="Phương thức"
+            allowClear
+            value={query.paymentMethod || undefined}
+            onChange={(v) => setQuery({ ...query, paymentMethod: v })}
+            style={{ width: "100%" }}
+          >
+            <Select.Option value="CASH">CASH</Select.Option>
+            <Select.Option value="BANKING">BANKING</Select.Option>
+            <Select.Option value="MOMO">MOMO</Select.Option>
+            <Select.Option value="CREDIT_CARD">CREDIT_CARD</Select.Option>
+          </Select>
+        </div>
 
-        <Select
-          placeholder="Trạng thái"
-          allowClear
-          value={query.paymentStatus || undefined}
-          onChange={(v) => setQuery({ ...query, paymentStatus: v })}
-        >
-          <Select.Option value="PENDING">PENDING</Select.Option>
-          <Select.Option value="PAID">PAID</Select.Option>
-          <Select.Option value="FAILED">FAILED</Select.Option>
-          <Select.Option value="REFUND">REFUND</Select.Option>
-        </Select>
+        <div style={{ flex: "0 0 150px" }}>
+          <Select
+            placeholder="Trạng thái"
+            allowClear
+            value={query.paymentStatus || undefined}
+            onChange={(v) => setQuery({ ...query, paymentStatus: v })}
+            style={{ width: "100%" }}
+          >
+            <Select.Option value="PENDING">PENDING</Select.Option>
+            <Select.Option value="PAID">PAID</Select.Option>
+            <Select.Option value="FAILED">FAILED</Select.Option>
+            <Select.Option value="REFUND">REFUND</Select.Option>
+          </Select>
+        </div>
 
-        <DatePicker
-          placeholder="Ngày thanh toán"
-          onChange={(v) =>
-            setQuery({ ...query, paymentDate: v ? v.toISOString() : "" })
-          }
-        />
+        <div style={{ flex: "0 0 170px" }}>
+          <DatePicker
+            placeholder="Ngày thanh toán"
+            onChange={(v) =>
+              setQuery({ ...query, paymentDate: v ? v.toISOString() : "" })
+            }
+            style={{ width: "100%" }}
+          />
+        </div>
 
-        <DatePicker
-          placeholder="Chu kỳ"
-          onChange={(v) =>
-            setQuery({
-              ...query,
-              paymentPeriod: v ? v.format("YYYY-MM-DD") : "",
-            })
-          }
-        />
+        <div style={{ flex: "0 0 170px" }}>
+          <DatePicker
+            placeholder="Chu kỳ"
+            onChange={(v) =>
+              setQuery({
+                ...query,
+                paymentPeriod: v ? v.format("YYYY-MM-DD") : "",
+              })
+            }
+            style={{ width: "100%" }}
+          />
+        </div>
 
-        <Button onClick={resetFilters}>Reset</Button>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 10 }}>
+          <Button onClick={resetFilters}>Reset</Button>
 
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          Thêm khoản
-        </Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+            Thêm khoản
+          </Button>
+        </div>
       </div>
 
       {/* TABLE */}
@@ -414,10 +463,19 @@ export default function AdminPayment() {
       {/* MODAL UPDATE STATUS */}
       <Modal
         open={modalUpdateOpen}
-        onCancel={() => setModalUpdateOpen(false)}
+        onCancel={() => {
+          setModalUpdateOpen(false);
+          updateForm.resetFields();
+        }}
         title="Cập nhật trạng thái thanh toán"
         footer={null}
       >
+        <Form form={updateForm} layout="vertical">
+          <Form.Item name="dateRange" label="Khoảng ngày (start - end)">
+            <DatePicker.RangePicker style={{ width: "100%" }} />
+          </Form.Item>
+        </Form>
+
         <p>Chọn trạng thái mới:</p>
 
         <Space direction="vertical" style={{ width: "100%" }}>
